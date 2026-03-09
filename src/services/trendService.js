@@ -33,12 +33,14 @@ export const getTrends = async () => {
     }
 
     const trends = trendingSearches
+      .filter(t => t?.title?.query)
       .map(t => t.title.query)
       .slice(0, 10)
 
     logInfo(`Fetched ${trends.length} trends from Google Trends`)
 
-    return trends  } catch (error) {
+    return trends
+  } catch (error) {
 
     logError(`Trend fetch failed: ${error.message}`)
 

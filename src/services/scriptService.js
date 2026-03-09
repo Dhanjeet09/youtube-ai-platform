@@ -25,7 +25,7 @@ Max 100 words.
       ]
     })
 
-    return completion.choices[0].message.content
+    return completion?.choices?.[0]?.message?.content ?? ''
 
   } catch (error) {
 

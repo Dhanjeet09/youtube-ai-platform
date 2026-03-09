@@ -51,7 +51,7 @@ export const generateScriptFromTrend = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Script generation failed",
-      error: error.message
+      ...(process.env.NODE_ENV === "development" && { error: error.message })
     })
 
   }
