@@ -4,14 +4,21 @@ export const generateVoiceFromText = async (req, res, next) => {
   try {
     const { text } = req.body;
 
-    if (!text) {
+    const trimmedText = text.trim();
+    if (!trimmedText) {
       return res.status(400).json({
         success: false,
-        message: "Text is required",
+        message: "Text cannot be empty or whitespace only",
+      });
+    }
+    if (trimmedText.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message: "Text must be 2000 characters or less",
       });
     }
 
-    const voicePath = await generateVoice(text);
+    const voicePath = await generateVoice(trimmedText);
 
     res.json({
       success: true,

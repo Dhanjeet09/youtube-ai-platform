@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 
 export const generateVoice = async (text) => {
-  const url =
-    "https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb";
+  const voiceId = process.env.ELEVENLABS_VOICE_ID || "JBFqnCBsd6RMkjVDRZzb";
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
 
   const response = await axios({
     method: "POST",
