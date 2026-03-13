@@ -5,8 +5,14 @@ export const fetchStockVideo = async (req, res, next) => {
 
     const { topic } = req.body
 
-    const videoPath = await downloadStockVideo(topic)
+    if (!topic || typeof topic !== 'string' || !topic.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Topic is required'
+      })
+    }
 
+    const videoPath = await downloadStockVideo(topic)
     res.json({
       success: true,
       video: videoPath
