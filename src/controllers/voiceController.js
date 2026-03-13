@@ -4,6 +4,13 @@ export const generateVoiceFromText = async (req, res, next) => {
   try {
     const { text } = req.body;
 
+    if (typeof text !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: "text must be a string",
+      });
+    }
+
     const trimmedText = text.trim();
     if (!trimmedText) {
       return res.status(400).json({
