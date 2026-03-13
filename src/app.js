@@ -5,6 +5,7 @@ import connectDB from "./config/db.js"
 
 import trendRoutes from "./routes/trendRoutes.js"
 import voiceRoutes from "./routes/voiceRoutes.js"
+import videoRoutes from "./routes/videoRoutes.js"
 
 dotenv.config()
 
@@ -20,6 +21,7 @@ try {
 }
 app.use("/api/trends", trendRoutes)
 app.use("/api/voice", voiceRoutes)
+app.use("/api/video", videoRoutes)
 
 app.get("/", (req, res) => {
  res.send("AI YouTube Automation API Running")
