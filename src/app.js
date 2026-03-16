@@ -7,6 +7,7 @@ import trendRoutes from "./routes/trendRoutes.js"
 import voiceRoutes from "./routes/voiceRoutes.js"
 import videoRoutes from "./routes/videoRoutes.js"
 import renderRoutes from "./routes/renderRoutes.js"
+import pipelineRoutes from "./routes/pipelineRoutes.js"
 
 dotenv.config()
 
@@ -24,6 +25,7 @@ app.use("/api/trends", trendRoutes)
 app.use("/api/voice", voiceRoutes)
 app.use("/api/video", videoRoutes)
 app.use("/api/render", renderRoutes)
+app.use("/api/pipeline", pipelineRoutes)
 
 app.get("/", (req, res) => {
  res.send("AI YouTube Automation API Running")
