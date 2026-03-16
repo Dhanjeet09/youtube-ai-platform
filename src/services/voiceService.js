@@ -1,50 +1,49 @@
-import axios from "axios";
-import fs from "fs";
-import path from "path";
+import axios from "axios"
+import fs from "fs"
+import path from "path"
+
+const detectTone = (script) => {
+
+  const text = script.toLowerCase()
+
+  if (text.includes("ai") || text.includes("technology") || text.includes("tool"))
+    return "en-us"
+
+  if (text.includes("success") || text.includes("motivation") || text.includes("growth"))
+    return "en-au"
+
+  if (text.includes("news") || text.includes("update"))
+    return "en-uk"
+
+  return "en"
+}
 
 export const generateVoice = async (text) => {
-  if (!process.env.ELEVENLABS_API_KEY || typeof process.env.ELEVENLABS_API_KEY !== 'string') {
-    throw new Error("ELEVENLABS_API_KEY is not set");
-  }
 
-  const voiceId = process.env.ELEVENLABS_VOICE_ID || "JBFqnCBsd6RMkjVDRZzb";
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
-
-  let response;
-  try {
-    response = await axios({
-      method: "POST",
-      url,
-      headers: {
-        "xi-api-key": process.env.ELEVENLABS_API_KEY,
-        "Content-Type": "application/json",
-      },
-      data: {
-        text,
-        model_id: "eleven_multilingual_v2",
-      },
-      responseType: "arraybuffer",
-      timeout: 30000, // 30 seconds timeout
-    });
-  } catch (error) {
-    console.error("Error calling ElevenLabs API:", error.message);
-    if (error.response) {
-      console.error("Response status:", error.response.status);
-      console.error("Response data:", error.response.data);
-    }
-    throw new Error("Failed to generate voice from ElevenLabs API");
-  }
-
-  const audioDir = "assets/generated/audio";
+  const audioDir = path.join("assets", "generated", "audio")
 
   if (!fs.existsSync(audioDir)) {
-    fs.mkdirSync(audioDir, { recursive: true });
+    fs.mkdirSync(audioDir, { recursive: true })
   }
 
-  const fileName = `voice-${Date.now()}-${Math.floor(Math.random() * 1000)}.mp3`;
-  const outputPath = path.join(audioDir, fileName);
+  const tone = detectTone(text)
 
-  fs.writeFileSync(outputPath, response.data);
+  const fileName = `voice-${Date.now()}-${Math.floor(Math.random()*1000)}.mp3`
+  const outputPath = path.join(audioDir, fileName)
 
-  return outputPath;
-};
+  const response = await axios({
+    method: "GET",
+    url: "https://translate.google.com/translate_tts",
+    params: {
+      ie: "UTF-8",
+      client: "tw-ob",
+      q: text,
+      tl: tone
+    },
+    responseType: "arraybuffer"
+  })
+
+  fs.writeFileSync(outputPath, response.data)
+
+  return outputPath
+}

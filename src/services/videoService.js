@@ -5,25 +5,32 @@ import path from "path"
 export const downloadStockVideo = async (query) => {
 
   const response = await axios.get(
-    `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=1`,
+    "https://api.pexels.com/videos/search",
     {
       headers: {
-        Authorization: process.env.PEXELS_API_KEY
+        Authorization: process.env.PEXELS_API_KEY,
       },
-      timeout: 10000
+      params: {
+        query,
+        per_page: 10,
+      },
     }
   )
 
-  if (!response.data.videos || !Array.isArray(response.data.videos) || response.data.videos.length === 0) {
-    throw new Error(`No videos found for query: ${query}`);
+  const videos = response.data.videos
+
+  if (!videos || !Array.isArray(videos) || videos.length === 0) {
+    throw new Error(`No videos found for query: ${query}`)
   }
 
-  const video = response.data.videos[0];
-  if (!video.video_files || !Array.isArray(video.video_files) || video.video_files.length === 0) {
-    throw new Error(`No video files found for query: ${query}`);
+  // random video selection
+  const randomVideo = videos[Math.floor(Math.random() * videos.length)]
+
+  if (!randomVideo.video_files || randomVideo.video_files.length === 0) {
+    throw new Error(`No video files found for query: ${query}`)
   }
 
-  const videoUrl = video.video_files[0].link
+  const videoUrl = randomVideo.video_files[0].link
 
   const videoDir = "assets/generated/videos"
 
