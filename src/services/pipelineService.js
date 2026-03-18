@@ -25,7 +25,7 @@ export const createVideoPipeline = async () => {
   const videoPath = await downloadStockVideo(topic)
 
   // 5️⃣ Render final video
-  const finalVideo = await renderVideo(audioPath, videoPath)
+  const finalVideo = await renderVideo(audioPath, videoPath, script)
 
   return {
     topic,
