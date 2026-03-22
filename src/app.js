@@ -3,11 +3,15 @@ import dotenv from "dotenv"
 
 import connectDB from "./config/db.js"
 
+import { startScheduler } from "./services/schedulerService.js"
+startScheduler()
+
 import trendRoutes from "./routes/trendRoutes.js"
 import voiceRoutes from "./routes/voiceRoutes.js"
 import videoRoutes from "./routes/videoRoutes.js"
 import renderRoutes from "./routes/renderRoutes.js"
 import pipelineRoutes from "./routes/pipelineRoutes.js"
+import youtubeRoutes from "./routes/youtubeRoutes.js"
 
 dotenv.config()
 
@@ -26,6 +30,7 @@ app.use("/api/voice", voiceRoutes)
 app.use("/api/video", videoRoutes)
 app.use("/api/render", renderRoutes)
 app.use("/api/pipeline", pipelineRoutes)
+app.use("/api/youtube", youtubeRoutes)
 
 app.get("/", (req, res) => {
  res.send("AI YouTube Automation API Running")

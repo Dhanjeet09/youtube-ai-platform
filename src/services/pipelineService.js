@@ -3,6 +3,7 @@ import { generateScript } from "./scriptService.js"
 import { generateVoice } from "./voiceService.js"
 import { downloadStockVideo } from "./videoService.js"
 import { renderVideo } from "./renderService.js"
+import { generateMetadata } from "./metadataService.js"
 
 export const createVideoPipeline = async () => {
 
@@ -17,6 +18,7 @@ export const createVideoPipeline = async () => {
 
   // 2️⃣ Generate script
   const script = await generateScript(topic)
+  const { title, tags } = await generateMetadata(script)
 
   // 3️⃣ Generate voice
   const audioPath = await generateVoice(script)
@@ -32,7 +34,9 @@ export const createVideoPipeline = async () => {
     script,
     audio: audioPath,
     stockVideo: videoPath,
-    finalVideo
+    finalVideo,
+    title,
+    tags
   }
 
 }
