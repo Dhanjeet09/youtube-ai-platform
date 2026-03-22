@@ -3,6 +3,9 @@ import dotenv from "dotenv"
 
 import connectDB from "./config/db.js"
 
+import { startScheduler } from "./services/schedulerService.js"
+startScheduler()
+
 import trendRoutes from "./routes/trendRoutes.js"
 import voiceRoutes from "./routes/voiceRoutes.js"
 import videoRoutes from "./routes/videoRoutes.js"
