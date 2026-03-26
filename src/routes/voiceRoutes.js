@@ -9,8 +9,8 @@ const validateVoiceInput = (req, res, next) => {
     return res.status(400).json({ error: 'Text field is required and must be a string' });
   }
   const trimmedText = text.trim();
-  if (trimmedText.length === 0 || trimmedText.length > 1000) {
-    return res.status(400).json({ error: 'Text must be between 1 and 1000 characters' });
+  if (trimmedText.length === 0 || trimmedText.length > 2000) {
+    return res.status(400).json({ error: 'Text must be between 1 and 2000 characters' });
   }
   req.body.text = trimmedText;
   next();
