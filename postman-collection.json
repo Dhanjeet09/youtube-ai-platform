@@ -1,0 +1,211 @@
+{
+  "info": {
+    "name": "AutoTube API",
+    "description": "AI YouTube Automation Platform API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "YouTube",
+      "item": [
+        {
+          "name": "Get Auth URL",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/youtube/auth-url"
+          }
+        },
+        {
+          "name": "Get Auth Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/youtube/status"
+          }
+        },
+        {
+          "name": "Upload Video",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/youtube/upload",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"filePath\": \"assets/generated/final-videos/final_123.mp4\",\n  \"title\": \"AI Tools You Must Try\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pipeline",
+      "item": [
+        {
+          "name": "Create Video (No Upload)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/pipeline/create",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"forceNiche\": \"Tech\"\n}" }
+          }
+        },
+        {
+          "name": "Run Full Pipeline (with Upload)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/pipeline/run",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Script",
+      "item": [
+        {
+          "name": "Generate Script",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/script/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"topic\": \"AI Tools 2024\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Voice",
+      "item": [
+        {
+          "name": "Generate Voice",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/voice/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"This is a test voiceover.\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Video",
+      "item": [
+        {
+          "name": "Download Stock Video",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/video/download",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"query\": \"technology\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Render",
+      "item": [
+        {
+          "name": "Render Video",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/render/video",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"audioPath\": \"assets/generated/audio/voice-123.mp3\",\n  \"videoPath\": \"assets/generated/videos/stock_abc.mp4\",\n  \"script\": \"Test script\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trends",
+      "item": [
+        {
+          "name": "Get Trends",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/trends"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Niche",
+      "item": [
+        {
+          "name": "Get Best Niche",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/niche/best"
+          }
+        },
+        {
+          "name": "Get All Niches",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/niche/list"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Video Analytics",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/analytics?videoId=dQw4w9WgXcQ"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Monetization",
+      "item": [
+        {
+          "name": "Get High RPM Niches",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/monetization/niches"
+          }
+        },
+        {
+          "name": "Get Earnings Estimate",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/monetization/earnings?niche=Finance&views=100000"
+          }
+        },
+        {
+          "name": "Get Affiliate CTA",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/monetization/cta?niche=Finance"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assets",
+      "item": [
+        {
+          "name": "Get Assets",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets"
+          }
+        },
+        {
+          "name": "Get Asset Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/stats"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -26,8 +26,6 @@ Tags: tag1, tag2, tag3, tag4
 
     const text = completion.choices[0].message.content
 
-    console.log("RAW METADATA:", text)
-
     const titleMatch = text.match(/Title:\s*(.*)/i)
     const tagsMatch = text.match(/Tags:\s*(.*)/i)
 
