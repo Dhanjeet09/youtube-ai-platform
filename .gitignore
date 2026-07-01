@@ -21,6 +21,11 @@ logs/
 *.log
 
 # =========================
+# Storage / generated assets (production path)
+# =========================
+storage/
+
+# =========================
 # Runtime data
 # =========================
 pids/
@@ -55,7 +60,8 @@ Thumbs.db
 *.swo
 
 # =========================
-# Generated assets (videos, audio)
+# Generated assets (videos, audio) - local dev only
+# In production, files are stored in Cloudflare R2
 # =========================
 assets/generated/videos/
 assets/generated/audio/
