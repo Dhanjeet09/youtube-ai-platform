@@ -1,0 +1,100 @@
+# =============================================================================
+# AutoTube — Deploy Pipeline
+# =============================================================================
+# Deploys to:
+#   - Staging: automatic on push to develop (Render preview)
+#   - Production: manual trigger with approval gate (Render live)
+#
+# Uses Render Deploy Hooks and GitHub Environments for approval gates.
+# =============================================================================
+
+name: Deploy
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  # ── Staging deploy (automatic on push to develop) ───────────────────────
+  staging:
+    name: Deploy to Staging
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to Render (staging)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}"
+        shell: bash
+
+  # ── Production deploy (manual trigger only) ────────────────────────────
+  production:
+    name: Deploy to Production
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+
+    # Manual approval gate via GitHub Environments
+    # Configure "Required reviewers" in the "production" environment settings.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to Render (production)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_PRODUCTION }}
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_PRODUCTION }}"
+        shell: bash
+
+      - name: Health check
+        run: |
+          echo "Waiting for deployment to settle..."
+          sleep 30
+          curl -f --retry 10 --retry-delay 10 --retry-max-time 120 \
+            "${{ secrets.PRODUCTION_URL }}/" || exit 1
+        shell: bash

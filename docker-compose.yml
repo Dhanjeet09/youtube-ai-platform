@@ -1,0 +1,74 @@
+# =============================================================================
+# AutoTube — Docker Compose (local development)
+# =============================================================================
+# Usage:
+#   docker compose up -d            # Start all services
+#   docker compose down             # Stop all services
+#   docker compose logs -f          # Follow logs
+#   docker compose exec app sh      # Enter the app container
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # ─── MongoDB ──────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7.0
+    container_name: autotube-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # ─── Redis (for caching / job queues) ─────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: autotube-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+
+  # ─── Application ──────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autotube-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/youtube-ai
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=development
+    volumes:
+      - app_storage:/app/storage
+      # Mount source for hot-reload during development
+      - ./server:/app/server
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  mongodb_data:
+  redis_data:
+  app_storage:

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoTube AI - Settings</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* Toggle Switch Styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: theme('colors.primary-container');
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: theme('colors.primary-container');
+        }
+    </style>
+<!-- Tailwind CSS & Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#ffdad4",
+                        "on-surface-variant": "#ebbbb4",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-fixed-variant": "#930100",
+                        "primary-container": "#ff5540",
+                        "secondary-fixed": "#b4ebff",
+                        "surface-variant": "#353534",
+                        "inverse-primary": "#c00100",
+                        "error": "#ffb4ab",
+                        "on-background": "#e5e2e1",
+                        "surface-tint": "#ffb4a8",
+                        "surface-container-lowest": "#0e0e0e",
+                        "tertiary-fixed": "#60ff99",
+                        "tertiary-container": "#00a657",
+                        "primary": "#ffb4a8",
+                        "on-primary-container": "#5c0000",
+                        "surface-container-low": "#1c1b1b",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#ffb4a8",
+                        "on-tertiary-container": "#003115",
+                        "surface": "#131313",
+                        "secondary-container": "#00d2fd",
+                        "tertiary": "#00e479",
+                        "on-tertiary": "#003919",
+                        "outline": "#b18780",
+                        "surface-container-high": "#2a2a2a",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-tertiary-fixed": "#00210c",
+                        "on-primary-fixed": "#410000",
+                        "on-secondary-container": "#005669",
+                        "on-error": "#690005",
+                        "on-secondary-fixed-variant": "#004e5f",
+                        "surface-container-highest": "#353534",
+                        "inverse-on-surface": "#313030",
+                        "secondary": "#a2e7ff",
+                        "secondary-fixed-dim": "#3cd7ff",
+                        "outline-variant": "#603e39",
+                        "inverse-surface": "#e5e2e1",
+                        "error-container": "#93000a",
+                        "tertiary-fixed-dim": "#00e479",
+                        "on-secondary": "#003642",
+                        "surface-container": "#201f1f",
+                        "on-primary": "#690100",
+                        "surface-dim": "#131313",
+                        "on-secondary-fixed": "#001f27",
+                        "background": "#131313",
+                        "surface-bright": "#3a3939"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "margin-desktop": "40px",
+                        "base": "4px",
+                        "margin-mobile": "16px",
+                        "sm": "12px",
+                        "lg": "24px",
+                        "gutter": "20px",
+                        "xs": "8px",
+                        "2xl": "48px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "title-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "title-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "mono-data": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-lg text-body-lg h-screen flex overflow-hidden selection:bg-primary-container/30">
+<!-- 1. SideNavBar (Desktop Shell) -->
+<aside class="hidden lg:flex flex-col h-full py-lg px-md bg-surface-variant/5 dark:bg-surface-variant/5 backdrop-blur-[20px] left-0 h-screen w-[280px] border-r border-white/10 shadow-none z-40 relative flex-shrink-0">
+<!-- Brand -->
+<div class="mb-xl flex items-center gap-xs px-sm">
+<span class="material-symbols-outlined icon-fill font-display-lg text-display-lg font-black text-primary" style="font-size: 32px;">auto_awesome_motion</span>
+<div>
+<h1 class="font-title-md text-title-md text-on-surface">AutoTube AI</h1>
+<p class="font-label-caps text-label-caps text-tertiary">Active</p>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 flex flex-col gap-xs">
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+                Generator
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+                Workflow
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+                Assets
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+                Analytics
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+                Monetization
+            </a>
+<!-- ACTIVE TAB -->
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-primary font-bold border-r-2 border-primary bg-white/5 scale-95 duration-150" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="settings">settings</span>
+                Settings
+            </a>
+</nav>
+<!-- CTA & Footer -->
+<div class="mt-auto flex flex-col gap-sm">
+<div class="bg-primary-container/10 border border-primary-container/20 rounded-lg p-sm text-center">
+<p class="font-label-caps text-label-caps text-primary">Scheduler Active</p>
+</div>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Logout
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col min-w-0 relative">
+<!-- 2. TopAppBar (Desktop Shell) -->
+<header class="hidden lg:flex justify-between items-center px-margin-desktop h-20 w-full ml-0 bg-surface/5 dark:bg-surface/5 backdrop-blur-[20px] border-b border-white/10 shadow-none z-30 transition-all duration-300 flex-shrink-0">
+<div class="flex-1">
+<!-- Search could go here if search_bar: on_left, but it's on_right conceptually or hidden in settings context, leaving empty for spacing -->
+</div>
+<div class="flex items-center gap-lg">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Scrollable Canvas -->
+<div class="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop pb-[100px] lg:pb-margin-desktop">
+<!-- Page Header -->
+<div class="mb-xl max-w-4xl mx-auto">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-base">Settings</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Configure your automation</p>
+</div>
+<!-- Settings Sections Container -->
+<div class="max-w-4xl mx-auto flex flex-col gap-lg">
+<!-- Section: YouTube Connection -->
+<section class="bg-surface-variant/5 border border-white/10 backdrop-blur-[20px] rounded-xl p-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-md relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+<div class="flex items-center gap-md z-10">
+<div class="w-16 h-16 rounded-full overflow-hidden border border-white/20 flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A high-quality profile picture for a tech-focused YouTube channel, featuring a stylized glowing geometric logo against a dark cinematic background. High contrast, professional lighting, conveying a modern AI brand aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmraYnPF_Eg6OEfftUHuxpIhzMcKCXgFUeF5PIEz1koO8cCJZYAOpJ9maTDd2omchZk52Ttx-IdmlSoggKkUe1OLxzWfqQ2Y5GRuY_ypZKIZw5Wob_V_lRh37eg8Zm9gVEZjeAd8qGMCFOLpQBB0fDAOns4bc8pumfbNbN8BNtN2lFGDIZP9EsOvGwuhyZcxkZoIzLLOOVpaNXvux4sk-WsiJzf5qcFfFRzLN1fqtwaT-Yw906YMKDfA"/>
+</div>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface mb-xs">AutoTube Official</h3>
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_rgba(0,228,121,0.6)]"></span>
+<span class="font-label-caps text-label-caps text-tertiary">Connected</span>
+</div>
+</div>
+</div>
+<button class="z-10 px-lg py-xs border border-white/20 rounded-lg text-on-surface font-body-sm hover:bg-white/10 transition-colors">
+                        Refresh Sync
+                    </button>
+</section>
+<!-- Section: Scheduler -->
+<section class="bg-surface-variant/5 border border-white/10 backdrop-blur-[20px] rounded-xl p-lg">
+<div class="flex justify-between items-center mb-lg border-b border-white/5 pb-md">
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Publish Scheduler</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Manage automated posting slots</p>
+</div>
+<!-- Toggle -->
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 transition-all duration-300 right-0 border-primary-container" id="toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-primary-container cursor-pointer transition-colors duration-300" for="toggle"></label>
+</div>
+</div>
+<!-- Time Slots Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<!-- Slot 1 -->
+<div class="bg-surface-container-high/50 border border-white/5 rounded-lg p-md flex flex-col gap-sm">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span class="font-label-caps text-label-caps">Slot 1</span>
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+</div>
+<div class="font-mono-data text-mono-data text-on-surface text-lg">09:00 AM</div>
+<div class="font-body-sm text-body-sm text-primary">Shorts / Daily</div>
+</div>
+<!-- Slot 2 -->
+<div class="bg-surface-container-high/50 border border-white/5 rounded-lg p-md flex flex-col gap-sm">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span class="font-label-caps text-label-caps">Slot 2</span>
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+</div>
+<div class="font-mono-data text-mono-data text-on-surface text-lg">03:00 PM</div>
+<div class="font-body-sm text-body-sm text-secondary-fixed">Long Form / Wed</div>
+</div>
+<!-- Slot 3 -->
+<div class="bg-surface-container-high/50 border border-white/5 rounded-lg p-md flex flex-col gap-sm border-dashed border-white/20 hover:border-white/40 hover:bg-white/5 transition-colors cursor-pointer justify-center items-center">
+<span class="material-symbols-outlined text-on-surface-variant mb-xs">add</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Add Slot</span>
+</div>
+</div>
+</section>
+<!-- Section: API Key -->
+<section class="bg-surface-variant/5 border border-white/10 backdrop-blur-[20px] rounded-xl p-lg">
+<h3 class="font-title-md text-title-md text-on-surface mb-xs">Developer API Key</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-lg">Used for external webhook triggers</p>
+<div class="flex flex-col md:flex-row gap-md items-stretch md:items-center mb-lg">
+<div class="flex-1 bg-surface-container-highest border border-white/10 rounded-lg px-md py-sm flex items-center justify-between">
+<span class="font-mono-data text-mono-data text-on-surface opacity-70 tracking-widest">sk_live_••••••••••••••••••••8f92</span>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+<button class="px-md py-sm bg-white/5 border border-white/10 rounded-lg font-body-sm text-on-surface hover:bg-white/10 transition-colors whitespace-nowrap flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+                            Regenerate
+                        </button>
+</div>
+<!-- Usage Stats -->
+<div>
+<div class="flex justify-between font-label-caps text-label-caps mb-xs">
+<span class="text-on-surface-variant">Monthly API Usage</span>
+<span class="text-secondary-fixed">72% (7,200 / 10,000)</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary-fixed to-secondary-container w-[72%] shadow-[0_0_10px_rgba(0,210,253,0.3)]"></div>
+</div>
+</div>
+</section>
+<!-- Section: Danger Zone -->
+<section class="bg-error-container/10 border border-error/20 rounded-xl p-lg mt-md">
+<h3 class="font-title-md text-title-md text-error mb-xs flex items-center gap-sm">
+<span class="material-symbols-outlined">warning</span>
+                        Danger Zone
+                    </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-lg">Destructive actions that cannot be undone.</p>
+<div class="flex flex-col md:flex-row gap-md">
+<button class="flex-1 px-lg py-sm border border-error/30 rounded-lg text-error font-body-sm hover:bg-error/10 transition-colors">
+                            Clear Generated Cache
+                        </button>
+<button class="flex-1 px-lg py-sm bg-error text-on-error rounded-lg font-body-sm hover:bg-error/90 transition-colors shadow-[0_0_15px_rgba(255,180,171,0.2)]">
+                            Delete Account
+                        </button>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- 3. BottomNavBar (Mobile Shell) -->
+<nav class="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center py-sm bg-surface-container-low/80 dark:bg-surface-container-low/80 backdrop-blur-xl border-t border-white/10 shadow-2xl rounded-t-xl tap-highlight-transparent">
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-white/5 rounded-lg p-xs transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-white/5 rounded-lg p-xs transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+<span class="font-label-caps text-label-caps mt-1">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-white/5 rounded-lg p-xs transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="sync_alt">sync_alt</span>
+<span class="font-label-caps text-label-caps mt-1">Flow</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-white/5 rounded-lg p-xs transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
+<span class="font-label-caps text-label-caps mt-1">Data</span>
+</a>
+<!-- ACTIVE TAB (Semantic mapping: Settings falls under Menu on mobile) -->
+<a class="flex flex-col items-center justify-center text-primary active:bg-white/5 rounded-lg p-xs transition-colors" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="menu">menu</span>
+<span class="font-label-caps text-label-caps mt-1">Menu</span>
+</a>
+</nav>
+</body></html>

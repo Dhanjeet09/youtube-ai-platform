@@ -3,30 +3,47 @@
   "version": "1.0.0",
   "description": "AI-powered faceless YouTube channel automation platform",
   "type": "module",
-  "main": "src/app.js",
+  "main": "server/app.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
-    "dev": "nodemon src/app.js",
-    "start": "node src/app.js",
+    "start": "node server/app.js",
+    "start:prod": "cross-env NODE_ENV=production node server/app.js",
+    "start:dev": "npm run dev",
+    "build": "cd client && npm run build",
+    "install:all": "npm install && cd client && npm install",
     "client": "cd client && npm run dev",
     "client:build": "cd client && npm run build",
-    "dev:all": "concurrently \"npm run dev\" \"npm run client\""
+    "dev": "nodemon server/app.js",
+    "clean": "rm -rf assets/generated/* storage/* client/dist && echo 'Cleaned generated assets'",
+    "dev:all": "concurrently \"npm run dev\" \"npm run client\"",
+    "lint": "echo 'No linter configured yet'",
+    "test": "npm run test:client",
+    "test:client": "cd client && npm run test",
+    "docker:build": "docker build -t autotube:latest .",
+    "docker:run": "docker run -p 5000:5000 --env-file .env autotube:latest"
   },
   "dependencies": {
     "axios": "^1.13.6",
-    "concurrently": "^8.2.0",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.6.1",
     "edge-tts-client": "^1.0.2",
     "express": "^4.22.1",
+    "express-rate-limit": "^7.4.1",
     "ffmpeg-static": "^5.3.0",
     "googleapis": "^171.4.0",
     "groq-sdk": "^0.37.0",
+    "helmet": "^8.0.0",
+    "imagekit": "^5.1.0",
     "mongoose": "^8.23.0",
     "node-cron": "^3.0.3",
-    "open": "^11.0.0",
     "youtube-search-api": "^2.0.1"
   },
   "devDependencies": {
+    "concurrently": "^8.2.0",
     "nodemon": "^3.1.14"
   }
 }

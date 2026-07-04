@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoTube AI - Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#ffdad4",
+                    "on-surface-variant": "#ebbbb4",
+                    "on-surface": "#e5e2e1",
+                    "on-primary-fixed-variant": "#930100",
+                    "primary-container": "#ff5540",
+                    "secondary-fixed": "#b4ebff",
+                    "surface-variant": "#353534",
+                    "inverse-primary": "#c00100",
+                    "error": "#ffb4ab",
+                    "on-background": "#e5e2e1",
+                    "surface-tint": "#ffb4a8",
+                    "surface-container-lowest": "#0e0e0e",
+                    "tertiary-fixed": "#60ff99",
+                    "tertiary-container": "#00a657",
+                    "primary": "#ffb4a8",
+                    "on-primary-container": "#5c0000",
+                    "surface-container-low": "#1c1b1b",
+                    "on-error-container": "#ffdad6",
+                    "primary-fixed-dim": "#ffb4a8",
+                    "on-tertiary-container": "#003115",
+                    "surface": "#131313",
+                    "secondary-container": "#00d2fd",
+                    "tertiary": "#00e479",
+                    "on-tertiary": "#003919",
+                    "outline": "#b18780",
+                    "surface-container-high": "#2a2a2a",
+                    "on-tertiary-fixed-variant": "#005228",
+                    "on-tertiary-fixed": "#00210c",
+                    "on-primary-fixed": "#410000",
+                    "on-secondary-container": "#005669",
+                    "on-error": "#690005",
+                    "on-secondary-fixed-variant": "#004e5f",
+                    "surface-container-highest": "#353534",
+                    "inverse-on-surface": "#313030",
+                    "secondary": "#a2e7ff",
+                    "secondary-fixed-dim": "#3cd7ff",
+                    "outline-variant": "#603e39",
+                    "inverse-surface": "#e5e2e1",
+                    "error-container": "#93000a",
+                    "tertiary-fixed-dim": "#00e479",
+                    "on-secondary": "#003642",
+                    "surface-container": "#201f1f",
+                    "on-primary": "#690100",
+                    "surface-dim": "#131313",
+                    "on-secondary-fixed": "#001f27",
+                    "background": "#131313",
+                    "surface-bright": "#3a3939"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "margin-desktop": "40px",
+                    "base": "4px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "lg": "24px",
+                    "gutter": "20px",
+                    "xs": "8px",
+                    "2xl": "48px",
+                    "md": "16px"
+            },
+            "fontFamily": {
+                    "title-md": [
+                            "Inter"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ],
+                    "display-lg": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Inter"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "headline-lg-mobile": [
+                            "Inter"
+                    ],
+                    "mono-data": [
+                            "JetBrains Mono"
+                    ]
+            },
+            "fontSize": {
+                    "title-md": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "mono-data": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Glass panel utilities */
+        .glass-panel {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-surface-2 {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* YouTube Red Gradient Button */
+        .btn-primary {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ff3333 0%, #e60000 100%);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+        
+        /* Glow Effect for active/focus states */
+        .glow-focus:focus-within {
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
+            border-color: rgba(255, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-lg min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden lg:flex flex-col h-full py-lg px-md bg-surface-variant/5 dark:bg-surface-variant/5 backdrop-blur-[20px] fixed left-0 h-screen w-[280px] border-r border-white/10 z-40">
+<div class="flex items-center gap-sm mb-xl px-sm">
+<span class="material-symbols-outlined text-primary text-[32px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<div class="flex flex-col">
+<span class="font-display-lg text-title-md font-black text-primary leading-tight">AutoTube AI</span>
+<span class="font-label-caps text-label-caps text-tertiary">Active</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-base">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">auto_awesome</span>
+                Generator
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+                Workflow
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+                Assets
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg bg-white/5 text-primary font-bold border-r-2 border-primary" href="#">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">insights</span>
+                Analytics
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">payments</span>
+                Monetization
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-auto pt-lg border-t border-white/10 flex flex-col gap-sm">
+<div class="px-md py-sm glass-surface-2 rounded-lg flex items-center justify-between mb-sm">
+<span class="font-label-caps text-label-caps text-on-surface">Scheduler Active</span>
+<div class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_rgba(0,228,121,0.5)]"></div>
+</div>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-[280px] min-h-screen flex flex-col relative z-0">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-desktop h-20 w-full bg-surface/5 dark:bg-surface/5 backdrop-blur-[20px] sticky top-0 z-30 shadow-none border-b border-white/10 hidden md:flex transition-all duration-300">
+<div class="flex items-center gap-md lg:hidden">
+<span class="material-symbols-outlined text-primary text-[32px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span class="font-display-lg text-title-md font-black text-primary leading-tight">AutoTube AI</span>
+</div>
+<div class="flex-1 flex justify-end items-center gap-md">
+<button class="p-sm text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-sm text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Mobile Header (Simplified) -->
+<header class="md:hidden flex justify-between items-center px-margin-mobile h-16 w-full bg-surface/5 backdrop-blur-[20px] sticky top-0 z-30 border-b border-white/10">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[24px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span class="font-display-lg text-title-md font-black text-primary">AutoTube AI</span>
+</div>
+<button class="p-sm text-on-surface-variant">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</header>
+<!-- Canvas Area -->
+<div class="flex-1 p-margin-mobile md:p-margin-desktop max-w-[1200px] mx-auto w-full pb-32 md:pb-margin-desktop">
+<!-- Page Header -->
+<div class="mb-xl">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-xs">Analytics</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Look up YouTube video performance</p>
+</div>
+<!-- Search Section -->
+<div class="glass-panel rounded-xl p-lg mb-xl">
+<div class="flex flex-col md:flex-row gap-md">
+<div class="flex-1 relative glow-focus rounded-lg transition-all duration-300">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-highest/50 border border-white/10 rounded-lg py-sm pl-[40px] pr-sm text-on-surface font-mono-data text-mono-data focus:outline-none focus:ring-0 focus:border-white/20 placeholder:text-on-surface-variant/50" placeholder="Enter YouTube Video ID (e.g., dQw4w9WgXcQ)" type="text"/>
+</div>
+<button class="btn-primary px-lg py-sm rounded-lg font-title-md text-title-md text-white flex items-center justify-center gap-sm transition-all duration-200" id="lookupBtn">
+<span class="material-symbols-outlined">travel_explore</span>
+                        Lookup Performance
+                    </button>
+</div>
+</div>
+<!-- Empty State (Initially Visible, hidden by JS) -->
+<div class="glass-surface-2 rounded-xl border border-dashed border-white/20 p-2xl flex flex-col items-center justify-center min-h-[400px] text-center" id="emptyState">
+<div class="w-20 h-20 rounded-full bg-surface-variant/30 flex items-center justify-center mb-lg">
+<span class="material-symbols-outlined text-[40px] text-on-surface-variant">youtube_activity</span>
+</div>
+<h3 class="font-title-md text-title-md text-on-surface mb-sm">Enter a YouTube video ID</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-md">Input a video ID in the search bar above to fetch real-time analytics, engagement rates, and performance metrics.</p>
+</div>
+<!-- Results Card (Initially Hidden, shown by JS) -->
+<div class="hidden animate-[fadeIn_0.5s_ease-out]" id="resultsCard">
+<div class="glass-panel rounded-xl overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+<div class="flex flex-col xl:flex-row">
+<!-- Thumbnail Section -->
+<div class="xl:w-5/12 relative aspect-video bg-black border-b xl:border-b-0 xl:border-r border-white/10 overflow-hidden group">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100" data-alt="A high-quality YouTube video thumbnail displayed in a dark-mode glassmorphism interface. The image should look like a cinematic, professional AI-generated tech review or tutorial, featuring neon red accents and a sophisticated futuristic aesthetic matching the mission control dashboard vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUT1vMF1t5kZW1v1vmlc2QjEHPyKgT_S1oRJweGyF3rj1k6W7h8D1FrL0CXxo4QL_SNqnhndbVUf7vPL5p7Y_4lKcHAzZjeTQoP3YMm6uxdBvdiRPLm0KIuCAtkzwk55I5HVa7e78uAhCC2DZ_DhV-Dd3oyQL5PKttPKaZCvVYYSf0wfIdLGiw_UqkjcGVf9lqJAeT-sKRmWlacRf9PKq9xo9_ogYr4ZpJrC1uu7hpoYbqi6yOpM3kjg"/>
+<!-- Overlay gradients -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-md right-md bg-black/70 backdrop-blur-md px-sm py-xs rounded font-mono-data text-mono-data text-white border border-white/10">
+                                14:23
+                            </div>
+<a class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300" href="#">
+<div class="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-md flex items-center justify-center border border-primary/50 shadow-[0_0_20px_rgba(255,0,0,0.3)]">
+<span class="material-symbols-outlined text-[32px] text-primary" data-weight="fill" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</a>
+</div>
+<!-- Metadata & Metrics Section -->
+<div class="xl:w-7/12 p-lg md:p-xl flex flex-col relative overflow-hidden">
+<!-- Subtle background glow -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="mb-lg">
+<div class="flex items-center gap-sm mb-sm">
+<span class="px-sm py-xs rounded bg-tertiary/10 text-tertiary font-label-caps text-label-caps border border-tertiary/20">Published</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Oct 24, 2023 • 10:30 AM</span>
+</div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface font-bold leading-tight mb-md line-clamp-2">The Future of Generative AI in Video Production (2024)</h2>
+</div>
+<!-- Metrics Bento Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-sm mb-xl flex-1">
+<div class="glass-surface-2 p-md rounded-lg flex flex-col justify-center border-l-2 border-l-secondary-container">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">visibility</span> Views
+                                    </span>
+<span class="font-title-md text-title-md text-on-surface font-mono-data">1.2M</span>
+</div>
+<div class="glass-surface-2 p-md rounded-lg flex flex-col justify-center border-l-2 border-l-primary">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">thumb_up</span> Likes
+                                    </span>
+<span class="font-title-md text-title-md text-on-surface font-mono-data">84.5K</span>
+</div>
+<div class="glass-surface-2 p-md rounded-lg flex flex-col justify-center border-l-2 border-l-tertiary">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">chat_bubble</span> Comments
+                                    </span>
+<span class="font-title-md text-title-md text-on-surface font-mono-data">4.2K</span>
+</div>
+<div class="glass-surface-2 p-md rounded-lg flex flex-col justify-center border-l-2 border-l-[#ff00ff]">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">trending_up</span> Eng. Rate
+                                    </span>
+<span class="font-title-md text-title-md text-on-surface font-mono-data text-shadow-glow">7.4%</span>
+</div>
+</div>
+<div class="mt-auto flex justify-end">
+<button class="glass-surface-2 hover:bg-white/10 px-lg py-sm rounded-lg font-title-md text-title-md text-on-surface flex items-center justify-center gap-sm transition-all border border-white/20 hover:border-primary/50">
+<span class="material-symbols-outlined">add_chart</span>
+                                    Add to Dashboard
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center py-sm bg-surface-container-low/80 dark:bg-surface-container-low/80 backdrop-blur-xl rounded-t-xl border-t border-white/10 shadow-2xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant tap-highlight-transparent active:bg-white/5 p-xs rounded-lg" href="#">
+<span class="material-symbols-outlined mb-xs text-[24px]">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant tap-highlight-transparent active:bg-white/5 p-xs rounded-lg" href="#">
+<span class="material-symbols-outlined mb-xs text-[24px]">add_circle</span>
+<span class="font-label-caps text-label-caps">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant tap-highlight-transparent active:bg-white/5 p-xs rounded-lg" href="#">
+<span class="material-symbols-outlined mb-xs text-[24px]">sync_alt</span>
+<span class="font-label-caps text-label-caps">Flow</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary tap-highlight-transparent active:bg-white/5 p-xs rounded-lg" href="#">
+<span class="material-symbols-outlined mb-xs text-[24px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bar_chart</span>
+<span class="font-label-caps text-label-caps">Data</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant tap-highlight-transparent active:bg-white/5 p-xs rounded-lg" href="#">
+<span class="material-symbols-outlined mb-xs text-[24px]">menu</span>
+<span class="font-label-caps text-label-caps">Menu</span>
+</a>
+</nav>
+<script>
+        // Simple interaction to toggle empty state and results card for demonstration
+        document.getElementById('lookupBtn').addEventListener('click', function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            // Loading state
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Loading...';
+            btn.classList.add('opacity-80');
+            
+            setTimeout(() => {
+                document.getElementById('emptyState').classList.add('hidden');
+                const resultsCard = document.getElementById('resultsCard');
+                resultsCard.classList.remove('hidden');
+                
+                // Reset button
+                btn.innerHTML = originalText;
+                btn.classList.remove('opacity-80');
+            }, 800);
+        });
+    </script>
+</body></html>

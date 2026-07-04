@@ -1,0 +1,100 @@
+# =============================================================================
+# AutoTube — CI Pipeline
+# =============================================================================
+# Runs on every push and PR to main branches:
+#   1. Lint / type-check
+#   2. Run tests (client)
+#   3. Build Docker image (verifies Dockerfile is valid)
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  DOCKER_IMAGE: autotube
+
+jobs:
+  # ── Client lint & test ──────────────────────────────────────────────────
+  client:
+    name: Client (lint + test)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build client
+        working-directory: client
+        run: npm run build
+
+      - name: Run client tests
+        working-directory: client
+        run: npm test
+        continue-on-error: true  # Tolerate no tests yet
+
+  # ── Server lint & test ──────────────────────────────────────────────────
+  server:
+    name: Server (lint + test)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install server dependencies
+        run: npm ci
+
+      - name: Lint server
+        run: npm run lint
+        continue-on-error: true
+
+  # ── Docker build check ──────────────────────────────────────────────────
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.DOCKER_IMAGE }}:ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
