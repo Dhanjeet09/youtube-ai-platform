@@ -22,8 +22,13 @@ import { validateEnvVars } from "./config/env.js"
 import {
   globalLimiter,
   pipelineLimiter,
-  youtubeLimiter,
   authLimiter,
+  scriptLimiter,
+  voiceLimiter,
+  videoDownloadLimiter,
+  analyticsLimiter,
+  settingsLimiter,
+  poemLimiter,
 } from "./middleware/rateLimiter.js"
 import { errorHandler } from "./middleware/errorHandler.js"
 import { log } from "./utils/logger.js"
@@ -32,8 +37,8 @@ import path from "path"
 import { access as fsAccess, constants as fsConstants } from "fs/promises"
 import { fileURLToPath } from "url"
 import mongoose from "mongoose"
-import { isR2Configured } from "./config/r2.js"
-import * as r2Service from "./services/r2Service.js"
+import { isImageKitConfigured } from "./config/imagekit.js"
+import { ensureYouTubeAuth } from "./config/youtube.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -52,6 +57,8 @@ import databaseRoutes from "./database/routes.js"
 import schedulerRoutes from "./scheduler/routes.js"
 import topicRoutes from "./modules/topic/routes.js"
 import thumbnailRoutes from "./modules/thumbnail/routes.js"
+import settingsRoutes from "./settings/routes.js"
+import poemRoutes from "./modules/poem/routes.js"
 
 const app = express()
 
@@ -147,12 +154,15 @@ app.use(
 // ── 4. Rate limiting ─────────────────────────────────────────────────────
 app.use("/api/", globalLimiter)
 app.use("/api/pipeline", pipelineLimiter)
-app.use("/api/youtube", youtubeLimiter)
+app.use("/api/script/generate", scriptLimiter)
+app.use("/api/voice/generate", voiceLimiter)
+app.use("/api/video/download", videoDownloadLimiter)
+app.use("/api/analytics", analyticsLimiter)
+app.use("/api/settings", settingsLimiter)
+app.use("/api/poems", poemLimiter)
 
-// Stricter rate limiting for auth/OAuth endpoints
-app.use("/api/youtube/auth", authLimiter)
-app.use("/api/youtube/auth-url", authLimiter)
-app.use("/api/youtube/callback", authLimiter)
+// YouTube routes handle their own rate limiting per-endpoint
+// (read-only: 30/15min, upload: 10/hour, auth callback: authLimiter)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STATIC FILE SERVING (WITH AUTHENTICATION)
@@ -161,114 +171,28 @@ app.use("/api/youtube/callback", authLimiter)
 const storagePath =
   process.env.STORAGE_PATH || path.join(__dirname, "..", "storage")
 
-/**
- * R2 proxy middleware — streams files from Cloudflare R2 with
- * correct Content-Type and Cache-Control headers.
- * Falls back to local express.static when R2 is not configured.
- */
-const createR2ProxyMiddleware = (bucketPrefix) => {
-  return async (req, res, next) => {
-    // Extract the file path from the URL
-    // e.g. /storage/audio/file.mp3 -> audio/file.mp3
-    // e.g. /assets/generated/audio/file.mp3 -> audio/file.mp3
-    let requestPath = req.path.replace(/^\/+/, "")
+// ── Static file serving ─────────────────────────────────────────
+// When ImageKit is configured, assets are served directly from ImageKit CDN URLs.
+// Local static serving is kept as fallback for development.
 
-    // For /assets route, strip the "assets/" or "assets/generated/" prefix
-    if (bucketPrefix === "assets" || bucketPrefix === "assets-generated") {
-      requestPath = requestPath.replace(/^assets\/(generated\/)?/, "")
-    }
+app.use(
+  "/storage",
+  apiAuth,
+  express.static(storagePath, {
+    dotfiles: "deny",
+    index: false,
+  })
+)
 
-    // Map URL path segments to R2 prefixes
-    const prefixMap = {
-      "audio/": "audio",
-      "videos/": "videos",
-      "video/": "videos",
-      "final-videos/": "final-videos",
-      "subtitles/": "subtitles",
-      "thumbnails/": "thumbnails",
-    }
-
-    // Determine the R2 key
-    let r2Key = null
-    for (const [urlPrefix, r2Prefix] of Object.entries(prefixMap)) {
-      if (requestPath.startsWith(urlPrefix)) {
-        r2Key = requestPath
-        break
-      }
-    }
-
-    // If we couldn't map to an R2 key, try the default: use the path as-is
-    if (!r2Key) {
-      r2Key = requestPath
-    }
-
-    try {
-      const fileData = await r2Service.getFileStream(r2Key)
-      if (fileData) {
-        res.setHeader("Content-Type", fileData.contentType)
-        res.setHeader("Content-Length", fileData.contentLength)
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable")
-        if (fileData.lastModified) {
-          res.setHeader("Last-Modified", fileData.lastModified.toUTCString())
-        }
-        // Stream the file from R2 to the response
-        fileData.stream.pipe(res)
-        return
-      }
-    } catch {
-      // R2 lookup failed — fall through to static serving
-    }
-
-    // Fallback: try local static file serving
-    next()
-  }
-}
-
-// ── R2-backed /storage route ──────────────────────────────────────
-if (isR2Configured()) {
-  log("INFO", "R2 is enabled — /storage and /assets will proxy from Cloudflare R2")
-
-  app.use("/storage", apiAuth, createR2ProxyMiddleware("storage"))
-  app.use(
-    "/storage",
-    apiAuth,
-    express.static(storagePath, {
-      dotfiles: "deny",
-      index: false,
-    })
-  )
-
-  // Legacy assets directory — proxy from R2 first, then local
-  app.use("/assets", apiAuth, createR2ProxyMiddleware("assets"))
-  app.use(
-    "/assets",
-    apiAuth,
-    express.static(path.join(__dirname, "..", "assets"), {
-      dotfiles: "deny",
-      index: false,
-    })
-  )
-} else {
-  // R2 not configured — use local static serving only
-  app.use(
-    "/storage",
-    apiAuth,
-    express.static(storagePath, {
-      dotfiles: "deny",
-      index: false,
-    })
-  )
-
-  // Legacy assets directory
-  app.use(
-    "/assets",
-    apiAuth,
-    express.static(path.join(__dirname, "..", "assets"), {
-      dotfiles: "deny",
-      index: false,
-    })
-  )
-}
+// Legacy assets directory
+app.use(
+  "/assets",
+  apiAuth,
+  express.static(path.join(__dirname, "..", "assets"), {
+    dotfiles: "deny",
+    index: false,
+  })
+)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DATABASE & ENV VALIDATION
@@ -281,6 +205,14 @@ try {
 } catch (error) {
   log("ERROR", "Failed to connect to database: " + error.message)
   process.exit(1)
+}
+
+// Load YouTube OAuth tokens from MongoDB so the client is ready before
+// any request handler uses it. Avoids race condition on first upload.
+try {
+  await ensureYouTubeAuth()
+} catch (error) {
+  log("WARN", "YouTube auth init failed (non-fatal)", { error: error.message })
 }
 
 // Validate required environment variables
@@ -322,6 +254,8 @@ app.use("/api/database", databaseRoutes)
 app.use("/api/scheduler", schedulerRoutes)
 app.use("/api/topic", topicRoutes)
 app.use("/api/thumbnail", thumbnailRoutes)
+app.use("/api/settings", settingsRoutes)
+app.use("/api/poems", poemRoutes)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HEALTH CHECK
@@ -349,11 +283,11 @@ app.get("/", async (req, res) => {
     healthy: mongoState === 1,
   }
 
-  // Storage — R2 or local?
-  if (isR2Configured()) {
+  // Storage — ImageKit or local?
+  if (isImageKitConfigured()) {
     checks.services.storage = {
-      type: "r2",
-      bucket: process.env.R2_BUCKET_NAME || "autotube-assets",
+      type: "imagekit",
+      urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || "not set",
       status: "configured",
       healthy: true,
     }

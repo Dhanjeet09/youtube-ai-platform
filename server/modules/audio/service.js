@@ -3,8 +3,8 @@ import fs from "fs"
 import path from "path"
 import crypto from "crypto"
 import { log as logger } from "../../utils/logger.js"
-import { isR2Configured } from "../../config/r2.js"
-import { uploadFile, getBucketPath } from "../../services/r2Service.js"
+import { isImageKitConfigured } from "../../config/imagekit.js"
+import { uploadFile as ikUpload, getBucketPath } from "../../services/imagekitService.js"
 
 const log = (level, message, data = {}) => logger(level, `[VOICE] ${message}`, data)
 
@@ -212,20 +212,23 @@ export const generateVoice = async (text, options = {}) => {
     // 🔴 FIX: Log only basename, not full path
     log("INFO", "Voice generated", { filename: fileName, size: `${fileSize}KB`, provider })
 
-    // Upload to R2 if configured (as side effect — pipeline still needs local file)
-    if (isR2Configured()) {
+    // Upload to ImageKit if configured (as side effect — pipeline still needs local file)
+    let imageKitUrl = null
+    if (isImageKitConfigured()) {
       try {
-        const r2Key = getBucketPath("audio", fileName)
-        const result = await uploadFile(r2Key, outputPath, "audio/mpeg")
+        const { folder } = getBucketPath("audio", fileName)
+        const result = await ikUpload(outputPath, fileName, folder)
         if (result) {
-          log("INFO", "Voice uploaded to R2", { key: result.key, local: outputPath })
+          log("INFO", "Voice uploaded to ImageKit", { url: result.url, local: outputPath })
+          imageKitUrl = result.url
         }
-      } catch (r2Error) {
-        log("WARN", "Failed to upload voice to R2", { error: r2Error.message })
+      } catch (ikError) {
+        log("WARN", "Failed to upload voice to ImageKit", { error: ikError.message })
       }
     }
 
-    return outputPath
+    // Return object with local path and ImageKit URL
+    return { path: outputPath, imageKitUrl }
 
   } catch (error) {
     log("ERROR", "Voice generation failed", { error: error.message, tone })
@@ -241,7 +244,8 @@ export const generateVoiceBatch = async (texts) => {
   return results.map((r, i) => ({
     index: i,
     success: r.status === "fulfilled",
-    path: r.status === "fulfilled" ? r.value : null,
+    path: r.status === "fulfilled" ? (r.value?.path || r.value) : null,
+    imageKitUrl: r.status === "fulfilled" ? (r.value?.imageKitUrl || null) : null,
     error: r.reason?.message || null
   }))
 }

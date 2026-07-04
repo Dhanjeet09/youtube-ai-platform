@@ -12,8 +12,8 @@ import path from "path"
 import { spawn } from "child_process"
 import { fileURLToPath } from "url"
 import { log as logger } from "../../utils/logger.js"
-import { isR2Configured } from "../../config/r2.js"
-import { uploadFile, getBucketPath } from "../../services/r2Service.js"
+import { isImageKitConfigured } from "../../config/imagekit.js"
+import { uploadFile as ikUpload, getBucketPath } from "../../services/imagekitService.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -121,22 +121,23 @@ export const generateThumbnail = async (videoPath, options = {}) => {
         const fileName = path.basename(outputPath)
         log("INFO", "Thumbnail generated", { filename: fileName })
 
-        // Upload to R2 if configured
-        let finalPath = outputPath
-        if (isR2Configured()) {
+        // Upload to ImageKit if configured
+        let imageKitUrl = null
+        if (isImageKitConfigured()) {
           try {
-            const r2Key = getBucketPath("thumbnails", fileName)
-            const result = await uploadFile(r2Key, outputPath, "image/jpeg")
+            const { folder } = getBucketPath("thumbnails", fileName)
+            const result = await ikUpload(outputPath, fileName, folder)
             if (result) {
-              log("INFO", "Thumbnail uploaded to R2", { key: result.key })
-              finalPath = result.key
+              log("INFO", "Thumbnail uploaded to ImageKit", { url: result.url })
+              imageKitUrl = result.url
             }
-          } catch (r2Error) {
-            log("WARN", "Failed to upload thumbnail to R2", { error: r2Error.message })
+          } catch (ikError) {
+            log("WARN", "Failed to upload thumbnail to ImageKit", { error: ikError.message })
           }
         }
 
-        resolve(finalPath)
+        // Return object with local path and ImageKit URL
+        resolve({ path: outputPath, imageKitUrl })
       } else {
         log("ERROR", "FFmpeg thumbnail failed", { stderr: stderr.slice(-200) })
         reject(new Error("FFmpeg thumbnail failed"))
@@ -165,7 +166,7 @@ export const generateThumbnails = async (videoPath, count = 3) => {
     const thumb = await generateThumbnail(videoPath, {
       timestamp: timestamps[i],
     })
-    if (thumb) results.push(thumb)
+    if (thumb) results.push(thumb.path || thumb)
   }
 
   return results

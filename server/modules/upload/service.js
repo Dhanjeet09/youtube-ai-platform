@@ -1,6 +1,6 @@
 import fs from "fs"
 import path from "path"
-import { youtube } from "../../config/youtube.js"
+import { youtube, ensureYouTubeAuth } from "../../config/youtube.js"
 import { log as logger } from "../../utils/logger.js"
 
 const log = (level, message, data = {}) => logger(level, `[UPLOAD] ${message}`, data)
@@ -15,6 +15,10 @@ export const uploadVideoToYouTube = async ({
 }) => {
 
   try {
+    // 🔴 FIX: Ensure YouTube OAuth tokens are loaded before attempting upload.
+    // Without this, the first upload after server start would fail because
+    // the lazy token loading might not have completed yet.
+    await ensureYouTubeAuth()
 
     if (!filePath) {
       throw new Error("filePath is missing")

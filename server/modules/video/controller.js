@@ -10,7 +10,8 @@ export const downloadVideo = async (req, res, next) => {
     if (!query) {
       return res.status(400).json({ success: false, message: "query is required" })
     }
-    const videoPath = await downloadStockVideo(query)
+    const result = await downloadStockVideo(query)
+    const videoPath = typeof result === 'string' ? result : result.path
     res.json({ success: true, data: { videoPath } })
   } catch (error) {
     next(error)

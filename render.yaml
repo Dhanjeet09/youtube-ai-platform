@@ -60,17 +60,13 @@ services:
       - key: STORAGE_PATH
         value: ./storage
 
-      # ─── R2 / Cloudflare Object Storage ─────────────────────
-      - key: R2_ENABLED
-        value: "true"
-      - key: R2_ACCOUNT_ID
+      # ─── ImageKit ─────────────────────────────────────────────
+      - key: IMAGEKIT_PUBLIC_KEY
         sync: false
-      - key: R2_ACCESS_KEY_ID
+      - key: IMAGEKIT_PRIVATE_KEY
         sync: false
-      - key: R2_SECRET_ACCESS_KEY
+      - key: IMAGEKIT_URL_ENDPOINT
         sync: false
-      - key: R2_BUCKET_NAME
-        value: autotube-assets
 
       # ─── Rate Limiting ──────────────────────────────────────
       - key: PIPELINE_RATE_LIMIT

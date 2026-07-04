@@ -28,13 +28,10 @@ const OPTIONAL_ENV_VARS = [
   { name: "FRONTEND_URL", description: "Frontend URL for CORS (e.g. https://autotube.vercel.app)" },
   { name: "STORAGE_PATH", description: "Path to storage directory for generated assets (default: ./storage)" },
   { name: "CREDENTIAL_ENCRYPTION_KEY", description: "AES-256 encryption key for stored OAuth tokens (openssl rand -hex 32)" },
-  // ─── R2 / Cloudflare Object Storage ───────────────────────────
-  { name: "R2_ENABLED", description: "Set to 'true' to enable Cloudflare R2 object storage (default: false in dev, true in prod)" },
-  { name: "R2_ACCOUNT_ID", description: "Cloudflare R2 Account ID (from R2 dashboard)" },
-  { name: "R2_ACCESS_KEY_ID", description: "Cloudflare R2 API Access Key ID" },
-  { name: "R2_SECRET_ACCESS_KEY", description: "Cloudflare R2 API Secret Access Key" },
-  { name: "R2_BUCKET_NAME", description: "Cloudflare R2 bucket name (default: autotube-assets)" },
-  { name: "R2_PUBLIC_URL", description: "Optional public URL for serving R2 files directly (e.g. https://assets.autotube.com)" },
+  // ─── ImageKit ──────────────────────────────────────────────────
+  { name: "IMAGEKIT_PUBLIC_KEY", description: "ImageKit Public Key (from dashboard → Developer → API Keys)" },
+  { name: "IMAGEKIT_PRIVATE_KEY", description: "ImageKit Private Key (from dashboard → Developer → API Keys)" },
+  { name: "IMAGEKIT_URL_ENDPOINT", description: "ImageKit URL Endpoint (e.g. https://ik.imagekit.io/your_id)" },
 ]
 
 export const validateEnvVars = () => {
@@ -56,17 +53,6 @@ export const validateEnvVars = () => {
     if (!process.env[env.name]) {
       warnings.push(env)
     }
-  }
-
-  // ── Conditionally required: R2 credentials when R2 is enabled ───
-  if (
-    process.env.R2_ENABLED === "true" &&
-    (!process.env.R2_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY)
-  ) {
-    securityWarnings.push(
-      "R2_ENABLED=true but R2 credentials are incomplete. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, " +
-      "and R2_SECRET_ACCESS_KEY, or set R2_ENABLED=false to use local storage."
-    )
   }
 
   // ── Security-specific checks ──────────────────────────────────────

@@ -30,11 +30,12 @@ export const generateVoiceFromText = async (req, res, next) => {
       })
     }
 
-    const voicePath = await generateVoice(trimmedText, { language })
+    const result = await generateVoice(trimmedText, { language })
+    const voicePath = typeof result === 'string' ? result : result.path
 
     res.json({
       success: true,
-      file: voicePath,
+      data: { file: voicePath },
     })
   } catch (error) {
     next(error)

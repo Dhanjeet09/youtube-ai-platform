@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 
+/**
+ * CustomSelect - Accessible custom dropdown
+ * Kinetic Glass design
+ */
 export function CustomSelect({
   value,
   onChange,
@@ -23,7 +27,6 @@ export function CustomSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Scroll focused item into view
   useEffect(() => {
     if (isOpen && focusedIdx >= 0 && listRef.current) {
       const item = listRef.current.children[focusedIdx]
@@ -95,14 +98,14 @@ export function CustomSelect({
         aria-activedescendant={focusedIdx >= 0 ? `option-${options[focusedIdx]?.value}` : undefined}
         aria-haspopup="listbox"
         className={`
-          w-full px-5 py-4 bg-white/5 border rounded-xl text-left flex items-center justify-between gap-2
+          w-full px-5 py-3.5 glass rounded-xl text-left flex items-center justify-between gap-2
           transition-all duration-200 outline-none touch-target
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          ${isOpen ? 'border-red-500/50' : 'border-white/10 hover:border-white/20'}
-          ${selected ? 'text-white' : 'text-gray-500'}
+          ${isOpen ? 'border-primary/50' : 'border-glass-border hover:border-white/20'}
+          ${selected ? 'text-on-surface' : 'text-gray-500'}
         `}
       >
-        <span className="truncate">{selected ? selected.label : placeholder}</span>
+        <span className="truncate text-body-sm">{selected ? selected.label : placeholder}</span>
         <svg
           className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
@@ -115,7 +118,7 @@ export function CustomSelect({
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 right-0 mt-2 z-[99999] bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden shadow-2xl shadow-black/50 animate-dropdown"
+          className="absolute top-full left-0 right-0 mt-2 z-[99999] bg-[#1a1a1a] border border-glass-border rounded-xl overflow-hidden shadow-2xl shadow-black/50 animate-dropdown"
           role="listbox"
           id={listboxId}
           aria-label={placeholder}
@@ -134,14 +137,13 @@ export function CustomSelect({
                   onMouseEnter={() => setFocusedIdx(index)}
                   className={`
                     w-full px-5 py-3 text-left flex items-center gap-3 transition-colors duration-100
-                    border-none cursor-pointer text-sm touch-target
+                    border-none cursor-pointer text-body-sm touch-target
                     ${isSelected
-                      ? 'bg-red-500/20 text-red-400'
+                      ? 'bg-primary-container/20 text-primary'
                       : isFocused
                         ? 'bg-white/10 text-white'
                         : 'text-gray-300 hover:bg-white/5 hover:text-white'
                     }
-                    ${index === 0 ? 'border-t-2 border-red-500' : ''}
                   `}
                 >
                   {option.icon && (
@@ -152,7 +154,7 @@ export function CustomSelect({
                     <span className="text-xs text-gray-500 flex-shrink-0">{option.sublabel}</span>
                   )}
                   {isSelected && (
-                    <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}

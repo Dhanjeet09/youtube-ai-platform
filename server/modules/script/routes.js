@@ -6,6 +6,54 @@ const router = express.Router()
 
 router.get("/options", asyncHandler(getScriptOptions))
 
+/**
+ * GET /api/script/languages
+ * Returns list of supported languages for script generation.
+ */
+router.get("/languages", asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      languages: [
+        { code: 'en', name: 'English' },
+        { code: 'hinglish', name: 'Hinglish' },
+        { code: 'hi', name: 'Hindi' },
+        { code: 'es', name: 'Spanish' },
+        { code: 'fr', name: 'French' },
+        { code: 'de', name: 'German' },
+        { code: 'pt', name: 'Portuguese' },
+        { code: 'ja', name: 'Japanese' },
+        { code: 'ko', name: 'Korean' },
+        { code: 'ar', name: 'Arabic' }
+      ]
+    }
+  })
+}))
+
+/**
+ * GET /api/script/config
+ * Returns script generation configuration (content types, age groups, video types, word limits).
+ */
+router.get("/config", asyncHandler(async (req, res) => {
+  const { getContentTypes, getAgeGroups } = await import("./service.js")
+
+  res.json({
+    success: true,
+    data: {
+      contentTypes: getContentTypes(),
+      ageGroups: getAgeGroups(),
+      videoTypes: [
+        { value: 'long', label: 'Long Form', icon: 'smart_display' },
+        { value: 'short', label: 'Short', icon: 'smartphone' }
+      ],
+      defaultMaxWords: 200,
+      minWords: 50,
+      maxWords: 500,
+      wordStep: 25
+    }
+  })
+}))
+
 const validateScriptInput = (req, res, next) => {
   const { topic, contentType, ageGroup, maxWords } = req.body
 

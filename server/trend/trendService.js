@@ -71,6 +71,7 @@ export const getTrends = async (options = {}) => {
         seen.add(v.title)
         allTrends.push({
           title: v.title,
+          topic: v.title,
           videoId: v.videoId,
           thumbnail: v.thumbnail?.thumbnails?.[0]?.url
         })
@@ -85,6 +86,7 @@ export const getTrends = async (options = {}) => {
     const fallbackKey = niche && FALLBACK_TRENDS[niche] ? niche : "Finance"
     return FALLBACK_TRENDS[fallbackKey].map((title, i) => ({
       title,
+      topic: title,
       videoId: `fallback_${i}`,
       thumbnail: null
     }))

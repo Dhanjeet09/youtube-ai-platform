@@ -1,5 +1,5 @@
 import express from "express"
-import { createVideoPipeline, runFullPipeline, runWorldCupPipeline, getPipelineStatus } from "./pipelineService.js"
+import { createVideoPipeline, runFullPipeline, runWorldCupPipeline, getPipelineStatus, getActivePipelines } from "./pipelineService.js"
 import { renderVideo } from "./renderService.js"
 import { asyncHandler } from "../middleware/asyncHandler.js"
 import { log as logger } from "../utils/logger.js"
@@ -7,6 +7,53 @@ import { log as logger } from "../utils/logger.js"
 const generateJobId = () => `pipeline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
 const router = express.Router()
+
+/**
+ * GET /api/pipeline/options
+ * Returns pipeline configuration options (quality, languages, step labels, timing).
+ */
+router.get("/options", asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      qualityOptions: [
+        { value: 'low', label: 'Fast', sublabel: 'Quick render', icon: 'speed' },
+        { value: 'medium', label: 'Balanced', sublabel: 'Good quality', icon: 'balance' },
+        { value: 'high', label: 'High Quality', sublabel: 'Best quality', icon: 'auto_awesome' }
+      ],
+      languages: [
+        { value: 'english', label: 'English' },
+        { value: 'hinglish', label: 'Hinglish' }
+      ],
+      stepLabels: {
+        1: 'Topic Selection',
+        2: 'Script Generation',
+        3: 'Voice Generation',
+        4: 'Video Download',
+        5: 'Metadata Generation',
+        6: 'Video Rendering',
+        7: 'Thumbnail Generation',
+        8: 'SEO & Finalization'
+      },
+      defaultAgeGroup: '18-25',
+      defaultMaxWords: 200,
+      pollInterval: 2000,
+      timeout: 600000
+    }
+  })
+}))
+
+/**
+ * GET /api/pipeline/active
+ * Returns list of currently active (in-progress) pipelines.
+ */
+router.get("/active", asyncHandler(async (req, res) => {
+  const { active, count } = getActivePipelines()
+  res.json({
+    success: true,
+    data: { active, count }
+  })
+}))
 
 /**
  * Run the pipeline in the background (non-blocking) so the API returns
@@ -62,17 +109,21 @@ function validatePipelineInput(body) {
   }
 
   if (audioPath !== undefined && audioPath !== null) {
-    if (typeof audioPath !== "string") {
-      errors.push("audioPath must be a string if provided")
-    } else if (audioPath.trim().length > 500) {
+    // Accept both string path and object { path, imageKitUrl }
+    const audioPathValue = typeof audioPath === 'string' ? audioPath : audioPath?.path
+    if (!audioPathValue || typeof audioPathValue !== "string") {
+      errors.push("audioPath must be a string or object with path property")
+    } else if (audioPathValue.trim().length > 500) {
       errors.push("audioPath must not exceed 500 characters")
     }
   }
 
   if (videoPath !== undefined && videoPath !== null) {
-    if (typeof videoPath !== "string") {
-      errors.push("videoPath must be a string if provided")
-    } else if (videoPath.trim().length > 500) {
+    // Accept both string path and object { path, imageKitUrl }
+    const videoPathValue = typeof videoPath === 'string' ? videoPath : videoPath?.path
+    if (!videoPathValue || typeof videoPathValue !== "string") {
+      errors.push("videoPath must be a string or object with path property")
+    } else if (videoPathValue.trim().length > 500) {
       errors.push("videoPath must not exceed 500 characters")
     }
   }
@@ -86,21 +137,26 @@ router.post("/create", asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: validationErrors.join("; ") })
   }
 
-  const { forceNiche, videoType, language, script, generateThumbnail, thumbnailTimestamp, audioPath, videoPath } = req.body
+  const { forceNiche, videoType, language, script, quality, generateThumbnail, thumbnailTimestamp, audioPath, videoPath } = req.body
 
   const jobId = generateJobId()
+
+  // Extract paths from objects if needed (handle both string and { path, imageKitUrl } formats)
+  const audioPathValue = typeof audioPath === 'string' ? audioPath : audioPath?.path
+  const videoPathValue = typeof videoPath === 'string' ? videoPath : videoPath?.path
 
   // BUG-002 FIX: Fire pipeline in background — return immediately with jobId
   startPipelineInBackground({
     forceNiche,
     videoType,
     language,
+    quality,
     script: script || undefined,
     generateThumbnail: generateThumbnail !== false, // default true
     thumbnailTimestamp,
     // Pre-generated assets from frontend steps 3-4
-    preGeneratedAudioPath: audioPath || undefined,
-    preGeneratedVideoPath: videoPath || undefined,
+    preGeneratedAudioPath: audioPathValue || undefined,
+    preGeneratedVideoPath: videoPathValue || undefined,
     jobId
   })
 
@@ -120,12 +176,13 @@ router.post("/run", asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: validationErrors.join("; ") })
   }
 
-  const { forceNiche, videoType, language, script, generateThumbnail, thumbnailTimestamp } = req.body
+  const { forceNiche, videoType, language, script, quality, generateThumbnail, thumbnailTimestamp } = req.body
 
   const result = await runFullPipeline({
     forceNiche,
     videoType,
     language,
+    quality,
     script: script || undefined,
     generateThumbnail: generateThumbnail !== false,
     thumbnailTimestamp

@@ -1,10 +1,6 @@
 /**
- * Assets - Media asset management with preview, confirm dialogs, and TabBar
- * 
- * Replaces alert()/confirm() with ConfirmDialog component.
- * Adds media preview for audio/video files.
- * Uses TabBar for tab navigation.
- * Uses shared components: PageHeader, LoadingSpinner, EmptyState, ErrorMessage, ConfirmDialog, TabBar
+ * Assets - Media asset management with 4-column grid, hover overlays, type badges
+ * Kinetic Glass design
  */
 import { useState, useEffect, useCallback } from 'react'
 import { getAssets, getAssetStats, deleteAsset, deleteAllAssets } from '../../services/api'
@@ -17,11 +13,11 @@ import ErrorMessage from '../../components/ErrorMessage'
 import ConfirmDialog from '../../components/ConfirmDialog'
 
 const TABS = [
-  { id: 'all', label: 'All', icon: '📁' },
-  { id: 'final', label: 'Final', icon: '▶️' },
-  { id: 'audio', label: 'Audio', icon: '🎵' },
-  { id: 'videos', label: 'Videos', icon: '🎬' },
-  { id: 'subtitles', label: 'Subs', icon: '📝' }
+  { id: 'all', label: 'All', icon: 'folder' },
+  { id: 'final', label: 'Videos', icon: 'smart_display' },
+  { id: 'audio', label: 'Audio', icon: 'audiotrack' },
+  { id: 'videos', label: 'Stock', icon: 'movie' },
+  { id: 'subtitles', label: 'Subs', icon: 'subtitles' }
 ]
 
 function Assets() {
@@ -31,34 +27,22 @@ function Assets() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmConfig, setConfirmConfig] = useState({ title: '', message: '', onConfirm: null, variant: 'default' })
   const [deletingPath, setDeletingPath] = useState(null)
-
-  // Media preview
   const [previewAsset, setPreviewAsset] = useState(null)
 
-  useEffect(() => {
-    loadAssets()
-  }, [assetRefreshKey])
+  useEffect(() => { loadAssets() }, [assetRefreshKey])
 
   const loadAssets = async () => {
     setLoading(true)
     setError(null)
     try {
-      const [assetsRes, statsRes] = await Promise.all([
-        getAssets(),
-        getAssetStats()
-      ])
+      const [assetsRes, statsRes] = await Promise.all([getAssets(), getAssetStats()])
       setAssets(assetsRes.data.data)
       setStats(statsRes.data.data)
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load assets')
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError(err.response?.data?.message || 'Failed to load assets') }
+    finally { setLoading(false) }
   }
 
   const showConfirm = (title, message, onConfirm, variant = 'default') => {
@@ -68,57 +52,27 @@ function Assets() {
 
   const handleDelete = async (filePath) => {
     setDeletingPath(filePath)
-    try {
-      await deleteAsset(filePath)
-      setConfirmOpen(false)
-      loadAssets()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed')
-    } finally {
-      setDeletingPath(null)
-    }
+    try { await deleteAsset(filePath); setConfirmOpen(false); loadAssets() }
+    catch (err) { setError(err.response?.data?.message || 'Delete failed') }
+    finally { setDeletingPath(null) }
   }
 
   const handleDeleteAll = async (type) => {
     setDeletingPath(type)
-    try {
-      await deleteAllAssets(type)
-      setConfirmOpen(false)
-      loadAssets()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed')
-    } finally {
-      setDeletingPath(null)
-    }
+    try { await deleteAllAssets(type); setConfirmOpen(false); loadAssets() }
+    catch (err) { setError(err.response?.data?.message || 'Delete failed') }
+    finally { setDeletingPath(null) }
   }
 
-  const requestDelete = (filePath) => {
-    showConfirm(
-      'Delete Asset',
-      'Are you sure you want to delete this file? This cannot be undone.',
-      () => handleDelete(filePath),
-      'danger'
-    )
-  }
-
+  const requestDelete = (filePath) => showConfirm('Delete Asset', 'Are you sure? This cannot be undone.', () => handleDelete(filePath), 'danger')
   const requestDeleteAll = (type) => {
     const label = type === 'all' ? 'all assets' : `${type} assets`
-    showConfirm(
-      `Delete ${label}`,
-      `Are you sure you want to delete all ${label}? This cannot be undone.`,
-      () => handleDeleteAll(type),
-      'danger'
-    )
+    showConfirm(`Delete ${label}`, `Delete all ${label}? This cannot be undone.`, () => handleDeleteAll(type), 'danger')
   }
 
   const getIcon = useCallback((type) => {
-    switch (type) {
-      case 'audio': return '🎵'
-      case 'videos': return '🎬'
-      case 'final': return '▶️'
-      case 'subtitles': return '📝'
-      default: return '📄'
-    }
+    const icons = { audio: 'audiotrack', videos: 'movie', final: 'smart_display', subtitles: 'subtitles' }
+    return icons[type] || 'description'
   }, [])
 
   const getMediaType = useCallback((type) => {
@@ -141,89 +95,94 @@ function Assets() {
   const displayAssets = getAssetsForTab()
 
   if (loading && !assets.audio?.length && !assets.videos?.length) {
-    return (
-      <LoadingSpinner size="lg" message="Loading assets..." />
-    )
+    return <LoadingSpinner size="lg" message="Loading assets..." />
   }
 
   return (
     <div>
-      <PageHeader
-        title="Assets"
-        subtitle="Media files and generated content"
-        action={{ label: '↻ Refresh', onClick: loadAssets }}
-      />
+      <PageHeader title="Asset Library" subtitle="Media files and generated content" action={{ label: 'Refresh', onClick: loadAssets }} />
 
-      {/* Error */}
       {error && (
         <div className="mb-6">
           <ErrorMessage message={error} onRetry={loadAssets} dismissible onDismiss={() => setError(null)} />
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 lg:mb-8">
-        <div className="glass rounded-2xl p-4 sm:p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-cyan-500"></div>
-          <div className="text-2xl sm:text-3xl font-bold">{stats?.audio || 0}</div>
-          <div className="text-xs sm:text-sm text-gray-400 mt-1">Audio Files</div>
-        </div>
-        <div className="glass rounded-2xl p-4 sm:p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-green-500"></div>
-          <div className="text-2xl sm:text-3xl font-bold">{stats?.videos || 0}</div>
-          <div className="text-xs sm:text-sm text-gray-400 mt-1">Stock Videos</div>
-        </div>
-        <div className="glass rounded-2xl p-4 sm:p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 gradient"></div>
-          <div className="text-2xl sm:text-3xl font-bold">{stats?.final || 0}</div>
-          <div className="text-xs sm:text-sm text-gray-400 mt-1">Final Videos</div>
-        </div>
-        <div className="glass rounded-2xl p-4 sm:p-6">
-          <div className="text-2xl sm:text-3xl font-bold truncate">{stats?.totalSize || '0 MB'}</div>
-          <div className="text-xs sm:text-sm text-gray-400 mt-1">Total Size</div>
-        </div>
+      {/* ═══ Stats Grid ═══ */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        {[
+          { label: 'Audio Files', value: stats?.audio || 0, icon: 'audiotrack', color: 'bg-secondary/20 text-secondary' },
+          { label: 'Stock Videos', value: stats?.videos || 0, icon: 'movie', color: 'bg-tertiary/20 text-tertiary' },
+          { label: 'Final Videos', value: stats?.final || 0, icon: 'smart_display', color: 'bg-primary-container/20 text-primary-container' },
+          { label: 'Total Size', value: stats?.totalSize || '0 MB', icon: 'sd_storage', color: 'bg-white/[0.06] text-gray-400' },
+        ].map(s => (
+          <div key={s.label} className="glass rounded-xl p-4 relative overflow-hidden">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${s.color}`}>
+              <span className="material-symbols-outlined text-lg" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>{s.icon}</span>
+            </div>
+            <div className="text-2xl font-bold">{s.value}</div>
+            <div className="text-body-sm text-gray-500 mt-1">{s.label}</div>
+          </div>
+        ))}
       </div>
 
-      {/* Tabs */}
+      {/* ═══ Tab Bar ═══ */}
       <TabBar tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
 
-      {/* Asset Grid */}
+      {/* ═══ Asset Grid ═══ */}
       {displayAssets.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {displayAssets.map((f, i) => {
             const mediaType = getMediaType(f.type)
             return (
-              <div key={i} className="glass rounded-xl overflow-hidden hover:-translate-y-1 transition-all hover:shadow-lg hover:shadow-black/20 group">
-                <div
-                  className="h-40 bg-white/5 flex items-center justify-center text-6xl text-gray-600 relative cursor-pointer"
-                  onClick={() => mediaType && setPreviewAsset(f)}
-                >
-                  {getIcon(f.type)}
-                  <span className="absolute top-2 right-2 px-2 py-1 bg-black/50 rounded text-xs">
+              <div key={i} className="glass rounded-xl overflow-hidden card-hover group">
+                {/* Thumbnail area */}
+                <div className="h-36 bg-white/[0.03] flex items-center justify-center relative cursor-pointer"
+                  onClick={() => mediaType && setPreviewAsset(f)}>
+                  <span className="material-symbols-outlined text-5xl text-gray-600" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>
+                    {getIcon(f.type)}
+                  </span>
+                  {/* Type badge */}
+                  <span className="absolute top-2 right-2 px-2 py-0.5 bg-black/50 rounded-md text-[10px] font-medium uppercase tracking-wider text-gray-300">
                     {f.type}
                   </span>
+                  {/* Hover overlay */}
                   {mediaType && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition">
-                      <span className="text-white opacity-0 group-hover:opacity-100 transition text-sm bg-black/50 px-3 py-1.5 rounded-lg">
-                        ▶ Preview
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-all">
+                      <span className="text-white opacity-0 group-hover:opacity-100 transition text-body-sm bg-black/60 px-4 py-2 rounded-lg flex items-center gap-2">
+                        <span className="material-symbols-outlined text-lg" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>play_circle</span>
+                        Preview
                       </span>
                     </div>
                   )}
                 </div>
-                <div className="p-4">
-                  <div className="text-sm font-medium truncate" title={f.name}>{f.name}</div>
-                  <div className="flex justify-between text-xs text-gray-500 mt-2">
+                {/* Card info */}
+                <div className="p-3.5">
+                  <div className="text-body-sm font-medium truncate" title={f.name}>{f.name}</div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1.5">
                     <span>{f.sizeFormatted}</span>
                     <span>{f.modified ? new Date(f.modified).toLocaleDateString() : ''}</span>
                   </div>
-                  {activeTab !== 'all' && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => {
+                        const a = document.createElement('a')
+                        a.href = f.path
+                        a.download = f.name
+                        a.click()
+                      }}
+                      className="flex-1 py-2 glass rounded-lg hover:bg-white/[0.08] transition text-body-sm font-medium flex items-center justify-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-sm" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>download</span>
+                      Download
+                    </button>
                     <button
                       onClick={() => requestDelete(f.path)}
-                      className="w-full mt-3 py-2 bg-red-500/15 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/25 transition text-sm font-medium"
+                      className="py-2 px-3 bg-primary-container/15 text-primary rounded-lg border border-primary-container/30 hover:bg-primary-container/25 transition text-body-sm flex items-center justify-center"
                     >
-                      🗑️ Delete
+                      <span className="material-symbols-outlined text-sm" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>delete</span>
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             )
@@ -231,89 +190,63 @@ function Assets() {
         </div>
       ) : (
         <EmptyState
-          icon={getIcon(activeTab)}
+          icon={<span className="material-symbols-outlined text-5xl" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>{getIcon(activeTab)}</span>}
           title={`No ${activeTab === 'all' ? '' : activeTab} Assets Found`}
           description="Run the pipeline to generate assets"
         />
       )}
 
-      {/* Manage Assets */}
-      <div className="glass rounded-2xl p-4 sm:p-6 mt-6 lg:mt-8">
-        <h3 className="text-sm text-gray-400 uppercase tracking-wider mb-4">Manage Assets</h3>
+      {/* ═══ Manage Assets ═══ */}
+      <div className="glass rounded-2xl p-5 sm:p-6 mt-6">
+        <h3 className="text-label-caps text-gray-500 uppercase tracking-wider mb-4">Manage Assets</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button onClick={() => requestDeleteAll('audio')} className="w-full px-3 py-3 bg-red-500/15 text-red-400 rounded-xl border border-red-500/30 hover:bg-red-500/25 transition text-sm font-medium touch-target flex items-center justify-center gap-1.5">
-            🎵 Audio
+          <button onClick={() => requestDeleteAll('audio')} className="w-full px-3 py-3 bg-primary-container/15 text-primary rounded-xl border border-primary-container/30 hover:bg-primary-container/25 transition text-body-sm font-medium touch-target flex items-center justify-center gap-1.5">
+            <span className="material-symbols-outlined text-sm" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>audiotrack</span> Audio
           </button>
-          <button onClick={() => requestDeleteAll('videos')} className="w-full px-3 py-3 bg-red-500/15 text-red-400 rounded-xl border border-red-500/30 hover:bg-red-500/25 transition text-sm font-medium touch-target flex items-center justify-center gap-1.5">
-            🎬 Videos
+          <button onClick={() => requestDeleteAll('videos')} className="w-full px-3 py-3 bg-primary-container/15 text-primary rounded-xl border border-primary-container/30 hover:bg-primary-container/25 transition text-body-sm font-medium touch-target flex items-center justify-center gap-1.5">
+            <span className="material-symbols-outlined text-sm" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>movie</span> Videos
           </button>
-          <button onClick={() => requestDeleteAll('final')} className="w-full px-3 py-3 bg-red-500/15 text-red-400 rounded-xl border border-red-500/30 hover:bg-red-500/25 transition text-sm font-medium touch-target flex items-center justify-center gap-1.5">
-            ▶️ Final
+          <button onClick={() => requestDeleteAll('final')} className="w-full px-3 py-3 bg-primary-container/15 text-primary rounded-xl border border-primary-container/30 hover:bg-primary-container/25 transition text-body-sm font-medium touch-target flex items-center justify-center gap-1.5">
+            <span className="material-symbols-outlined text-sm" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>smart_display</span> Final
           </button>
-          <button onClick={() => requestDeleteAll('all')} className="w-full px-3 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition text-sm font-medium touch-target flex items-center justify-center gap-1.5">
-            🗑️ All
+          <button onClick={() => requestDeleteAll('all')} className="w-full px-3 py-3 bg-primary-container text-white rounded-xl hover:bg-primary-dark transition text-body-sm font-medium touch-target flex items-center justify-center gap-1.5">
+            <span className="material-symbols-outlined text-sm" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>delete_sweep</span> All
           </button>
         </div>
       </div>
 
-      {/* Media Preview Modal */}
+      {/* ═══ Media Preview Modal ═══ */}
       {previewAsset && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4" onClick={() => setPreviewAsset(null)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative glass rounded-2xl p-4 sm:p-6 max-w-2xl w-full border border-white/10 mx-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center gap-3 mb-3 sm:mb-4">
-              <h3 className="font-semibold text-sm sm:text-base truncate">{previewAsset.name}</h3>
+          <div className="relative glass rounded-2xl p-5 sm:p-6 max-w-2xl w-full border border-glass-border shadow-2xl mx-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center gap-3 mb-4">
+              <h3 className="font-semibold text-body-sm sm:text-base truncate">{previewAsset.name}</h3>
               <button onClick={() => setPreviewAsset(null)} className="text-gray-400 hover:text-white transition p-1 touch-target" aria-label="Close preview">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <span className="material-symbols-outlined" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>close</span>
               </button>
             </div>
             <div className="bg-black/60 rounded-xl overflow-hidden">
               {getMediaType(previewAsset.type) === 'audio' ? (
-                <div className="p-4 sm:p-8 text-center">
-                  <div className="text-4xl sm:text-6xl mb-4">🎵</div>
-                  <audio controls className="w-full" src={previewAsset.path}>
-                    Your browser does not support audio playback.
-                  </audio>
+                <div className="p-6 sm:p-8 text-center">
+                  <span className="material-symbols-outlined text-6xl text-gray-500 mb-4" style={{ fontFamily: "'Material Symbols Outlined', sans-serif" }}>audiotrack</span>
+                  <audio controls className="w-full" src={previewAsset.path}>Your browser does not support audio playback.</audio>
                 </div>
               ) : (
-                <div className="p-3 sm:p-4">
-                  <div className="text-4xl sm:text-6xl text-center mb-4">🎬</div>
-                  <video
-                    controls
-                    className="w-full rounded-lg max-h-[300px] sm:max-h-[400px]"
-                    src={previewAsset.path}
-                  >
-                    Your browser does not support video playback.
-                  </video>
+                <div className="p-4">
+                  <video controls className="w-full rounded-lg max-h-[400px]" src={previewAsset.path}>Your browser does not support video playback.</video>
                 </div>
               )}
             </div>
-            <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-              <div className="truncate">
-                <span className="text-gray-500">Size:</span> {previewAsset.sizeFormatted}
-              </div>
-              <div className="truncate">
-                <span className="text-gray-500">Modified:</span> {previewAsset.modified ? new Date(previewAsset.modified).toLocaleString() : 'N/A'}
-              </div>
+            <div className="mt-4 grid grid-cols-2 gap-4 text-body-sm">
+              <div className="truncate"><span className="text-gray-500">Size:</span> {previewAsset.sizeFormatted}</div>
+              <div className="truncate"><span className="text-gray-500">Modified:</span> {previewAsset.modified ? new Date(previewAsset.modified).toLocaleString() : 'N/A'}</div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        open={confirmOpen}
-        title={confirmConfig.title}
-        message={confirmConfig.message}
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        variant={confirmConfig.variant}
-        loading={!!deletingPath}
-        onConfirm={confirmConfig.onConfirm}
-        onCancel={() => setConfirmOpen(false)}
-      />
+      <ConfirmDialog open={confirmOpen} title={confirmConfig.title} message={confirmConfig.message} confirmLabel="Delete" cancelLabel="Cancel" variant={confirmConfig.variant} loading={!!deletingPath} onConfirm={confirmConfig.onConfirm} onCancel={() => setConfirmOpen(false)} />
     </div>
   )
 }

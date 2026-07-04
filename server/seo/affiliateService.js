@@ -15,17 +15,30 @@ export const generateAffiliateCTA = (niche) => {
   const affiliateLinks = getAffiliateLinks(niche)
 
   if (affiliateLinks.length === 0) {
-    return cta
+    return {
+      voiceCTA: cta,
+      descriptionCTA: cta,
+      pinnedComment: PINNED_COMMENT,
+      products: []
+    }
   }
 
   const linksText = affiliateLinks
     .map(link => `${link.name}: ${link.url}`)
     .join("\n")
 
+  const products = affiliateLinks.map(link => ({
+    name: link.name,
+    url: link.url,
+    commission: link.commission,
+    price: 0
+  }))
+
   return {
     voiceCTA: cta,
     descriptionCTA: `\n\n🔗 AFFILIATE LINKS (I earn commission at no cost to you):\n${linksText}\n\n💰 These links help support the channel!`,
-    pinnedComment: `${PINNED_COMMENT}\n\n${linksText}\n\n⚠️ I may earn a small commission when you use these links, at no extra cost to you. This helps support the channel!`
+    pinnedComment: `${PINNED_COMMENT}\n\n${linksText}\n\n⚠️ I may earn a small commission when you use these links, at no extra cost to you. This helps support the channel!`,
+    products
   }
 }
 

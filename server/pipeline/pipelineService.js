@@ -9,10 +9,11 @@ import { uploadVideoToYouTube } from "../modules/upload/service.js"
 import { getTrendingTopic } from "../trend/trendAggregatorService.js"
 import { retryWithBackoff } from "../utils/retry.js"
 import { log as logger } from "../utils/logger.js"
+import { isYouTubeAuthenticated } from "../utils/youtubeAuth.js"
 import { MatchEvent, ContentTemplate } from "../database/models/index.js"
 import { generateThumbnail, generateThumbnails } from "../modules/thumbnail/service.js"
 import { generateSEOContent } from "../seo/seoService.js"
-import { isR2Configured } from "../config/r2.js"
+import { isImageKitConfigured } from "../config/imagekit.js"
 import fs from "fs"
 import path from "path"
 
@@ -70,6 +71,25 @@ export const getPipelineStatus = (jobId) => {
   return pipelineStatusMap.get(jobId) || null
 }
 
+/**
+ * Returns all active (non-completed, non-failed) pipelines and their count.
+ */
+export const getActivePipelines = () => {
+  const active = []
+  for (const [jobId, status] of pipelineStatusMap.entries()) {
+    if (status.status === 'processing' || status.status === 'running' || status.status === 'polling') {
+      active.push({
+        jobId,
+        status: status.status,
+        progress: status.progress ?? 0,
+        step: status.step ?? 0,
+        stepLabel: status.stepLabel || ''
+      })
+    }
+  }
+  return { active, count: active.length }
+}
+
 const log = (level, message, data = {}) => logger(level, `[PIPELINE] ${message}`, data)
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
@@ -104,8 +124,8 @@ const cleanupTempFiles = (jobId) => {
     }
   }
 
-  // Also clean up any temp directories from R2 downloads
-  const tempDirs = ["assets/generated/final-videos/.r2-temp"]
+  // Also clean up any temp directories
+  const tempDirs = ["assets/generated/final-videos/.temp-downloads"]
   for (const dir of tempDirs) {
     try {
       const resolved = path.resolve(dir)
@@ -132,23 +152,6 @@ const withTimeout = (promise, ms, label = "operation") => {
     }, ms)
   })
   return Promise.race([promise.finally(() => clearTimeout(timer)), timeoutPromise])
-}
-
-const isYouTubeAuthenticated = async () => {
-  // Check MongoDB-backed credential store only.
-  // 🔴 FIX: Removed deprecated youtube-token.json fallback — that was a local
-  // file-based auth mechanism that bypassed encryption at rest. All token
-  // storage should go through ServerCredential (AES-256-CBC encrypted).
-  try {
-    const { default: ServerCredential } = await import(
-      "../database/models/ServerCredential.js"
-    )
-    const tokens = await ServerCredential.retrieve("youtube-oauth")
-    if (tokens) return true
-  } catch {
-    // DB not available — return false
-  }
-  return false
 }
 
 const generateVideoDescription = (script, title, tags, niche, options = {}) => {
@@ -305,6 +308,7 @@ export const createVideoPipeline = async (options = {}) => {
     // 🔴 FIX: Sequential execution — voice must complete before video download.
     // Each step fully completes before the next begins. No parallel execution.
     let audioPath = null
+    let audioImageKitUrl = null
 
     if (preGeneratedAudioPath) {
       // Use pre-generated audio from frontend step 3
@@ -320,9 +324,16 @@ export const createVideoPipeline = async (options = {}) => {
 
       log("INFO", "Generating voice...")
       try {
-        audioPath = await retryWithBackoff(() => generateVoice(script, voiceOptions), { name: "Generate voice", maxRetries: 2 })
+        const audioResult = await retryWithBackoff(() => generateVoice(script, voiceOptions), { name: "Generate voice", maxRetries: 2 })
+        // Handle both old (string) and new ({ path, imageKitUrl }) return format
+        if (typeof audioResult === "string") {
+          audioPath = audioResult
+        } else if (audioResult && typeof audioResult === "object") {
+          audioPath = audioResult.path || null
+          audioImageKitUrl = audioResult.imageKitUrl || null
+        }
         trackFile(audioPath, jobId)
-        log("INFO", "Voice generated", { filename: path.basename(audioPath) })
+        log("INFO", "Voice generated", { filename: path.basename(audioPath || "unknown") })
       } catch (err) {
         log("ERROR", "Voice generation failed", { error: err.message })
         throw new Error(`Voice generation failed: ${err.message}. Pipeline cannot continue without audio.`)
@@ -336,6 +347,7 @@ export const createVideoPipeline = async (options = {}) => {
     // ── Step 4: Video download (progress 46-60%) ──
     // 🔴 FIX: Sequential — starts ONLY after voice generation is confirmed done.
     let videoPath = null
+    let stockVideoImageKitUrl = null
 
     if (preGeneratedVideoPath) {
       // Use pre-generated video from frontend step 4
@@ -351,9 +363,16 @@ export const createVideoPipeline = async (options = {}) => {
 
       log("INFO", "Downloading stock video...")
       try {
-        videoPath = await retryWithBackoff(() => downloadStockVideo(topic), { name: "Download stock video", maxRetries: 2 })
+        const videoResult = await retryWithBackoff(() => downloadStockVideo(topic), { name: "Download stock video", maxRetries: 2 })
+        // Handle both old (string) and new ({ path, imageKitUrl }) return format
+        if (typeof videoResult === "string") {
+          videoPath = videoResult
+        } else if (videoResult && typeof videoResult === "object") {
+          videoPath = videoResult.path || null
+          stockVideoImageKitUrl = videoResult.imageKitUrl || null
+        }
         trackFile(videoPath, jobId)
-        log("INFO", "Stock video downloaded", { filename: path.basename(videoPath) })
+        log("INFO", "Stock video downloaded", { filename: path.basename(videoPath || "unknown") })
       } catch (err) {
         log("ERROR", "Stock video download failed", { error: err.message })
         throw new Error(`Video download failed: ${err.message}. Pipeline cannot continue without video.`)
@@ -396,18 +415,20 @@ export const createVideoPipeline = async (options = {}) => {
       { name: "Render video", maxRetries: 2 }
     )
 
-    // renderResult is now { videoPath, subtitlePath, localVideoPath }
+    // renderResult is now { videoPath, subtitlePath, localVideoPath, videoImageKitUrl, subtitleImageKitUrl }
     const finalVideo = typeof renderResult === "string" ? renderResult : renderResult.videoPath
     const subtitlePath = typeof renderResult === "string" ? null : (renderResult.subtitlePath || null)
     // Keep the local path for operations that need local files (thumbnail, YouTube upload)
     const localVideoPath = typeof renderResult === "string" ? finalVideo : (renderResult.localVideoPath || finalVideo)
+    // Capture ImageKit URLs from render (null if ImageKit not configured)
+    const renderVideoImageKitUrl = typeof renderResult === "string" ? null : (renderResult.videoImageKitUrl || null)
+    const renderSubtitleImageKitUrl = typeof renderResult === "string" ? null : (renderResult.subtitleImageKitUrl || null)
 
     // 🔴 FIX: Helper to convert paths to safe relative form.
-    // Handles both local filesystem paths and R2 keys.
     const toRelative = (absPath) => {
       if (!absPath || typeof absPath !== "string") return null
-      // If it's already an R2 key (starts with audio/, videos/, etc.), return as-is
-      if (/^(audio|videos|final-videos|subtitles|thumbnails)\//.test(absPath)) {
+      // If it's already an ImageKit URL, return as-is
+      if (absPath.startsWith("http://") || absPath.startsWith("https://")) {
         return absPath
       }
       const normalized = absPath.replace(/\\/g, "/")
@@ -436,6 +457,7 @@ export const createVideoPipeline = async (options = {}) => {
 
     // ── Step 7: Thumbnail generation (progress 86-90%) ──
     let thumbnailPath = null
+    let thumbnailImageKitUrl = null
     if (doGenerateThumbnail && localVideoPath) {
       if (jobId) {
         updatePipelineStatus(jobId, { step: 7, status: "processing", progress: 86, logs: ["Generating thumbnail..."] })
@@ -444,9 +466,16 @@ export const createVideoPipeline = async (options = {}) => {
       try {
         // 🔴 FIX: Log only basename
         log("INFO", "Generating thumbnail from video", { videoFile: path.basename(localVideoPath), timestamp: thumbnailTimestamp })
-        thumbnailPath = await generateThumbnail(localVideoPath, { timestamp: thumbnailTimestamp })
+        const thumbnailResult = await generateThumbnail(localVideoPath, { timestamp: thumbnailTimestamp })
+        // Handle both old (string) and new ({ path, imageKitUrl }) return format
+        if (typeof thumbnailResult === "string") {
+          thumbnailPath = thumbnailResult
+        } else if (thumbnailResult && typeof thumbnailResult === "object") {
+          thumbnailPath = thumbnailResult.path || null
+          thumbnailImageKitUrl = thumbnailResult.imageKitUrl || null
+        }
         // 🔴 FIX: Log only basename
-        log("INFO", "Thumbnail generated", { filename: path.basename(thumbnailPath) })
+        log("INFO", "Thumbnail generated", { filename: path.basename(thumbnailPath || "unknown") })
       } catch (thumbError) {
         log("WARN", "Thumbnail generation failed, continuing", { error: thumbError.message })
       }
@@ -461,7 +490,7 @@ export const createVideoPipeline = async (options = {}) => {
     log("INFO", "Pipeline rendered", {
       duration: `${duration}s`,
       finalVideo: path.basename(finalVideo),
-      hasThumbnail: !!thumbnailPath
+      hasThumbnail: !!(thumbnailPath || thumbnailImageKitUrl)
     })
 
     // ── Step 8: SEO + Result preparation (progress 91-100%) ──
@@ -494,6 +523,9 @@ export const createVideoPipeline = async (options = {}) => {
       audio: toRelative(audioPath),
       stockVideo: toRelative(videoPath),
       finalVideo: toRelative(finalVideo),
+      // SECURITY: localVideoPath is included internally for YouTube upload
+      // and thumbnail generation, but is stripped before being stored in
+      // the status map (which is served to the client via API).
       localVideoPath: localVideoPath || null,
       subtitlePath: toRelative(subtitlePath),
       thumbnailPath: toRelative(thumbnailPath),
@@ -502,15 +534,26 @@ export const createVideoPipeline = async (options = {}) => {
       videoType,
       language,
       description,
-      matchData: matchData || null
+      matchData: matchData || null,
+
+      // ── ImageKit URLs (populated by services that upload to ImageKit) ──
+      imageKitUrls: {
+        video: renderVideoImageKitUrl,       // set by renderService after ImageKit upload
+        thumbnail: thumbnailImageKitUrl,     // set by thumbnailService after ImageKit upload
+        audio: audioImageKitUrl,             // set by audioService after ImageKit upload
+        subtitles: renderSubtitleImageKitUrl  // set by renderService after ImageKit upload
+      }
     }
 
     if (jobId) {
+      // SECURITY: Strip localVideoPath before storing in status map
+      // to prevent leaking server filesystem paths via the status API.
+      const { localVideoPath: _, ...safeResult } = pipelineResult
       updatePipelineStatus(jobId, {
         step: 8,
         status: "completed",
         progress: 100,
-        result: pipelineResult,
+        result: safeResult,
         logs: ["Pipeline completed successfully"]
       })
       // Remove status entry after 1 hour to prevent unbounded growth
@@ -606,31 +649,12 @@ export const runFullPipeline = async (options = {}) => {
     try {
       const isSportsContent = result.niche === "Sports" || result.niche === "WorldCup"
       log("INFO", "Uploading to YouTube...")
-      // Use the local video file path for YouTube upload (R2 videos need local access)
+      // Use the local video file path for YouTube upload
       // The pipeline tracks the local path for this purpose
       let uploadFilePath = result.finalVideo
       // Check if there's a local video path we can use
       if (result.localVideoPath && fs.existsSync(result.localVideoPath)) {
         uploadFilePath = result.localVideoPath
-      } else if (isR2Configured()) {
-        // If no local file, download from R2 to a temp location
-        const isR2Key = /^(audio|videos|final-videos|subtitles|thumbnails)\//.test(result.finalVideo)
-        if (isR2Key) {
-          log("INFO", "Downloading final video from R2 for YouTube upload", { key: result.finalVideo })
-          const { getFileStream } = await import("../services/r2Service.js")
-          const fileData = await getFileStream(result.finalVideo)
-          if (fileData) {
-            const tempUploadPath = path.resolve(`assets/generated/final-videos/.youtube-upload-${jobId || Date.now()}.mp4`)
-            const writeStream = fs.createWriteStream(tempUploadPath)
-            await new Promise((resolve, reject) => {
-              fileData.stream.pipe(writeStream)
-              writeStream.on("finish", resolve)
-              writeStream.on("error", reject)
-            })
-            uploadFilePath = tempUploadPath
-            trackFile(uploadFilePath, jobId) // ensure cleanup
-          }
-        }
       }
       const uploadResult = await uploadVideoToYouTube({
         filePath: uploadFilePath,

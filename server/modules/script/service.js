@@ -42,6 +42,62 @@ const generateScriptWithVariables = (promptTemplate, vars) => {
   return result
 }
 
+// ─── Hindi Poem Generation ─────────────────────────────────────────
+const HINDI_POEM_PROMPT_TEMPLATE = (topic, style = "shayari") => `
+You are a famous Hindi poet (शायर). Write a beautiful Hindi ${style} on the given topic.
+
+Topic: ${topic}
+Language: Pure Hindi (Devanagari script)
+Style: ${style}
+
+RULES:
+- Write 4-6 lines (couplets/शेर)
+- Use beautiful Hindi words and imagery
+- Must be emotional and touching
+- Easy to understand for common people
+- End with a powerful message
+- NO English words mixed in
+- Keep it SHORT (for YouTube Shorts - max 30 seconds voice)
+
+OUTPUT: Only the Hindi poem text with line breaks, no explanations, no numbering.
+`
+
+/**
+ * Generate a Hindi poem on a given topic
+ */
+export const generateHindiPoem = async (topic, options = {}) => {
+  const { style = "shayari", temperature = 0.9 } = options
+  
+  const prompt = HINDI_POEM_PROMPT_TEMPLATE(topic, style)
+  
+  try {
+    const poem = await retryWithBackoff(async () => {
+      const model = process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL
+      const completion = await getGroqClient().chat.completions.create({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        temperature,
+        max_tokens: 300
+      })
+      
+      const content = completion?.choices?.[0]?.message?.content
+      if (!content?.trim()) {
+        throw new Error("Empty response from AI")
+      }
+      return content.trim()
+    })
+    
+    const lineCount = poem.split('\n').filter(l => l.trim()).length
+    log("INFO", "Hindi poem generated", { topic, lineCount })
+    
+    return poem
+    
+  } catch (error) {
+    log("ERROR", "Hindi poem generation failed", { topic, error: error.message })
+    throw new Error(`Hindi poem generation failed: ${error.message}`)
+  }
+}
+
 const HINGLISH_PROMPT_TEMPLATE = (topic, videoType, maxWords) => `
 Write a viral YouTube Shorts script in HINGLISH (mix of Hindi and English).
 

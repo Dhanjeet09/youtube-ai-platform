@@ -8,21 +8,30 @@ import { getAudioDuration } from "../utils/getAudioDuration.js"
 import { log as logger } from "../utils/logger.js"
 import { resolveFfmpegPath } from "../utils/findFfmpeg.js"
 import { getQualityPreset } from "../modules/quality/service.js"
-import { isR2Configured } from "../config/r2.js"
-import { uploadFile, getBucketPath, getFileStream } from "../services/r2Service.js"
+import { isImageKitConfigured } from "../config/imagekit.js"
+import { uploadFile as ikUpload, getBucketPath } from "../services/imagekitService.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+const log = (level, msg, data = {}) => logger(level, `[RENDER] ${msg}`, data)
+
+// ── Constants ──────────────────────────────────────────────────────
+
+const RENDER_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes
+const STDERR_MAX_LENGTH = 5000
+const AUDIO_BITRATE = "128k"
+
+// ── Helpers ────────────────────────────────────────────────────────
 
 /**
  * Resolve a relative project path to an absolute path based on project root.
  */
 const resolveProjectPath = (relativePath) => {
   if (path.isAbsolute(relativePath)) return relativePath
-  return path.resolve(__dirname, "..", relativePath)
+  // Go up two levels: server/pipeline -> server -> project root
+  return path.resolve(__dirname, "..", "..", relativePath)
 }
-
-const log = (level, message, data = {}) => logger(level, `[RENDER] ${message}`, data)
 
 let ffmpegPath = null
 
@@ -47,46 +56,75 @@ function isPathAllowed(filePath) {
 }
 
 /**
- * Download a file from R2 to a local temp path for FFmpeg processing.
+ * Safely delete an array of file paths. Never throws.
+ */
+const cleanupFiles = (files) => {
+  for (const file of files) {
+    try {
+      if (file && fs.existsSync(file)) fs.unlinkSync(file)
+    } catch {
+      // Best-effort cleanup
+    }
+  }
+}
+
+/**
+ * Download a file from ImageKit URL to a local temp path for FFmpeg processing.
  * Returns the local path. If the input is already a local path, returns it as-is.
  */
 async function resolveToLocalPath(filePath, tempDir) {
-  // If it's already a local file that exists, return it
+  // If already absolute and exists, return as-is
+  if (path.isAbsolute(filePath) && fs.existsSync(filePath)) return filePath
+  
+  // If relative path, resolve to project root
+  if (!path.isAbsolute(filePath)) {
+    const resolved = resolveProjectPath(filePath)
+    if (fs.existsSync(resolved)) return resolved
+  }
+  
   if (fs.existsSync(filePath)) return filePath
 
-  // Check if it's an R2 key (starts with a known prefix)
-  const r2Prefixes = ["audio/", "videos/", "final-videos/", "subtitles/", "thumbnails/"]
-  const isR2Key = r2Prefixes.some((p) => filePath.startsWith(p))
+  const isImageUrl = filePath.startsWith("http://") || filePath.startsWith("https://")
 
-  if (isR2Key && isR2Configured()) {
-    log("INFO", "Downloading from R2 for FFmpeg processing", { key: filePath })
-    const fileData = await getFileStream(filePath)
-    if (!fileData) {
-      throw new Error(`File not found in R2: ${filePath}`)
-    }
+  if (isImageUrl && isImageKitConfigured()) {
+    log("INFO", "Downloading from ImageKit for FFmpeg processing", { url: filePath.slice(0, 80) + "..." })
+    const axios = (await import("axios")).default
+    const response = await axios({
+      url: filePath,
+      method: "GET",
+      responseType: "stream",
+      timeout: 120000,
+    })
 
-    const localFileName = path.basename(filePath)
+    const localFileName = path.basename(new URL(filePath).pathname) || `temp-${Date.now()}.mp4`
     const localPath = path.join(tempDir, localFileName)
     const writeStream = fs.createWriteStream(localPath)
 
     await new Promise((resolve, reject) => {
-      fileData.stream.pipe(writeStream)
+      response.data.pipe(writeStream)
       writeStream.on("finish", resolve)
       writeStream.on("error", reject)
     })
 
-    log("INFO", "Downloaded from R2 for processing", { key: filePath, local: localPath })
+    log("INFO", "Downloaded from ImageKit for processing", { local: localPath })
     return localPath
   }
 
   throw new Error(`File not found: ${filePath}`)
 }
 
+// ── Main render function ───────────────────────────────────────────
+
 export const renderVideo = async (audioPath, videoPath, script, options = {}) => {
-  const { quality = "medium", outputDir: rawOutputDir = "assets/generated/final-videos", orientation = "portrait", generateSubtitles = true } = options
+  const {
+    quality = "medium",
+    outputDir: rawOutputDir = "assets/generated/final-videos",
+    orientation = "portrait",
+    generateSubtitles = true,
+  } = options
   const outputDir = resolveProjectPath(rawOutputDir)
 
-  // ── Null / undefined guard ───────────────────────────────────────
+  // ── Null / undefined guard ──────────────────────────────────────
   if (!audioPath || typeof audioPath !== "string") {
     throw new Error("audioPath is required and must be a non-empty string")
   }
@@ -94,17 +132,19 @@ export const renderVideo = async (audioPath, videoPath, script, options = {}) =>
     throw new Error("videoPath is required and must be a non-empty string")
   }
 
-  // ── Create temp directory for R2 downloads ─────────────────────
-  const tempDir = path.join(outputDir, ".r2-temp")
+  // ── Create temp directory for ImageKit downloads ────────────────
+  const tempDir = path.join(outputDir, ".temp-downloads")
   if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true })
   }
 
-  // ── Resolve R2 keys to local files for FFmpeg processing ──────
+  // ── Resolve URLs to local files for FFmpeg processing ───────────
+  log("INFO", "Resolving paths", { audioPath, videoPath })
   const localAudioPath = await resolveToLocalPath(audioPath, tempDir)
   const localVideoPath = await resolveToLocalPath(videoPath, tempDir)
+  log("INFO", "Resolved paths", { localAudioPath, localVideoPath })
 
-  // ── Path traversal protection ────────────────────────────────────
+  // ── Path traversal protection ───────────────────────────────────
   if (!isPathAllowed(localAudioPath)) {
     throw new Error("Security: audioPath must be within assets/generated or storage directory")
   }
@@ -124,9 +164,12 @@ export const renderVideo = async (audioPath, videoPath, script, options = {}) =>
     fs.mkdirSync(outputDir, { recursive: true })
   }
 
-  const outputPath = path.join(outputDir, `final_${Date.now()}_${crypto.randomUUID().slice(0, 8)}.mp4`)
+  const outputPath = path.join(
+    outputDir,
+    `final_${Date.now()}_${crypto.randomUUID().slice(0, 8)}.mp4`
+  )
 
-  // Audio duration detection — uses resolved local path
+  // Audio duration detection
   let audioDuration
   try {
     audioDuration = await getAudioDuration(localAudioPath)
@@ -135,7 +178,7 @@ export const renderVideo = async (audioPath, videoPath, script, options = {}) =>
     log("WARN", "Could not determine actual audio duration, using estimate", { audioDuration })
   }
 
-  // ── Generate subtitle file before FFmpeg ──
+  // ── Generate subtitle file before FFmpeg ────────────────────────
   let subtitlePath = null
   if (generateSubtitles && script) {
     try {
@@ -152,21 +195,19 @@ export const renderVideo = async (audioPath, videoPath, script, options = {}) =>
     const startTime = Date.now()
     const preset = getQualityPreset(quality)
 
-    const scaleFilter = orientation === "landscape"
-      ? "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
-      : "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
+    const scaleFilter =
+      orientation === "landscape"
+        ? "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
+        : "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
 
     // Build subtitle filter if subtitle file exists
-    // 🔴 FIX: Correctly escape path for FFmpeg filter graph syntax.
-    // Backslashes → forward slashes, then colons escaped as \:
-    // (single backslash in the actual string for FFmpeg's filter parser)
+    // Windows paths: FFmpeg subtitle filter treats ':' as option separator.
+    // Fix: convert to forward slashes and escape colons with double backslash.
     const subtitleFilter = subtitlePath
-      ? `subtitles=${subtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:')}`
+      ? `subtitles=${subtitlePath.replace(/\\/g, "/").replace(/:/g, "\\\\:")}`
       : null
 
-    const videoFilter = subtitleFilter
-      ? `${scaleFilter},${subtitleFilter}`
-      : scaleFilter
+    const videoFilter = subtitleFilter ? `${scaleFilter},${subtitleFilter}` : scaleFilter
 
     const args = [
       "-y",
@@ -177,16 +218,17 @@ export const renderVideo = async (audioPath, videoPath, script, options = {}) =>
       "-preset", preset.preset,
       "-crf", preset.crf,
       "-c:a", "aac",
+      "-b:a", AUDIO_BITRATE,
+      "-movflags", "+faststart",
       "-shortest",
-      outputPath
+      outputPath,
     ]
 
-    // 🔴 FIX: Don't log full ffmpeg args — they contain internal file paths
-    // that could leak the server directory structure. Log only metadata.
     log("INFO", "Running ffmpeg", {
       inputCount: 2,
       outputCodec: "libx264",
       audioCodec: "aac",
+      audioBitrate: AUDIO_BITRATE,
       preset: preset.preset,
       crf: preset.crf,
       hasSubtitles: !!subtitlePath,
@@ -194,15 +236,12 @@ export const renderVideo = async (audioPath, videoPath, script, options = {}) =>
 
     const ffmpegProcess = spawn(ffmpeg, args)
 
-    // Safety timeout: kill FFmpeg if it hangs longer than 10 minutes
-    const RENDER_TIMEOUT_MS = 10 * 60 * 1000
     const renderTimer = setTimeout(() => {
       ffmpegProcess.kill("SIGKILL")
       reject(new Error("FFmpeg process timed out after 10 minutes"))
     }, RENDER_TIMEOUT_MS)
 
     let stderrLog = ""
-    const STDERR_MAX_LENGTH = 5000 // prevent unbounded memory growth
 
     ffmpegProcess.stderr.on("data", (data) => {
       const chunk = data.toString()
@@ -214,83 +253,76 @@ export const renderVideo = async (audioPath, videoPath, script, options = {}) =>
 
     ffmpegProcess.on("close", async (code) => {
       clearTimeout(renderTimer)
-      const duration = ((Date.now() - startTime) / 1000).toFixed(2)
 
-      // Clean up R2 temp download directory
+      // Clean up temp download directory
       try {
         if (fs.existsSync(tempDir)) {
           const tempFiles = fs.readdirSync(tempDir)
-          for (const f of tempFiles) {
-            fs.unlinkSync(path.join(tempDir, f))
-          }
+          cleanupFiles(tempFiles.map((f) => path.join(tempDir, f)))
           fs.rmdirSync(tempDir)
         }
-      } catch (cleanupErr) {
+      } catch {
         // Best-effort cleanup
       }
 
-      if (code === 0) {
-        if (!fs.existsSync(outputPath)) {
-          reject(new Error("Output file not created"))
-          return
-        }
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2)
 
-        const outputSize = fs.statSync(outputPath).size
-
-        if (outputSize === 0) {
-          reject(new Error("Output file is empty"))
-          return
-        }
-
-        log("INFO", "Render complete", {
-          outputPath,
-          duration: `${duration}s`,
-          size: `${(outputSize / 1024 / 1024).toFixed(2)}MB`,
-          subtitlePath
-        })
-
-        // Upload final video to R2 if configured
-        const resultPaths = { videoPath: outputPath, subtitlePath }
-        if (isR2Configured()) {
-          const outputFileName = path.basename(outputPath)
-          try {
-            const r2VideoKey = getBucketPath("final-videos", outputFileName)
-            const r2Result = await uploadFile(r2VideoKey, outputPath, "video/mp4")
-            if (r2Result) {
-              log("INFO", "Final video uploaded to R2", { key: r2Result.key })
-              resultPaths.videoPath = r2Result.key
-              resultPaths.videoR2Key = r2Result.key
-            }
-          } catch (r2Error) {
-            log("WARN", "Failed to upload final video to R2", { error: r2Error.message })
-          }
-
-          // Upload subtitle file to R2 if it exists
-          if (subtitlePath && fs.existsSync(subtitlePath)) {
-            try {
-              const subFileName = path.basename(subtitlePath)
-              const r2SubKey = getBucketPath("subtitles", subFileName)
-              const subResult = await uploadFile(r2SubKey, subtitlePath)
-              if (subResult) {
-                log("INFO", "Subtitles uploaded to R2", { key: subResult.key })
-                resultPaths.subtitlePath = subResult.key
-                resultPaths.subtitleR2Key = subResult.key
-              }
-            } catch (r2SubError) {
-              log("WARN", "Failed to upload subtitles to R2", { error: r2SubError.message })
-            }
-          }
-        }
-
-        // Always include the local output path for thumbnail generation etc.
-        resultPaths.localVideoPath = outputPath
-
-        // Resolve with both the video path and subtitle path
-        resolve(resultPaths)
-      } else {
+      if (code !== 0) {
         log("ERROR", "Render failed", { code, stderr: stderrLog.slice(-1000) })
         reject(new Error(`FFmpeg failed with code ${code}`))
+        return
       }
+
+      if (!fs.existsSync(outputPath)) {
+        reject(new Error("Output file not created"))
+        return
+      }
+
+      const outputSize = fs.statSync(outputPath).size
+
+      if (outputSize === 0) {
+        reject(new Error("Output file is empty"))
+        return
+      }
+
+      log("INFO", "Render complete", {
+        duration: `${duration}s`,
+        size: `${(outputSize / 1024 / 1024).toFixed(2)}MB`,
+        hasSubtitles: !!subtitlePath,
+      })
+
+      // Upload final video + subtitles to ImageKit if configured
+      const resultPaths = { videoPath: outputPath, subtitlePath }
+      if (isImageKitConfigured()) {
+        const outputFileName = path.basename(outputPath)
+        try {
+          const { folder: videoFolder } = getBucketPath("final-videos", outputFileName)
+          const ikResult = await ikUpload(outputPath, outputFileName, videoFolder)
+          if (ikResult) {
+            log("INFO", "Final video uploaded to ImageKit", { url: ikResult.url })
+            resultPaths.videoImageKitUrl = ikResult.url
+          }
+        } catch (ikError) {
+          log("WARN", "Failed to upload final video to ImageKit", { error: ikError.message })
+        }
+
+        if (subtitlePath && fs.existsSync(subtitlePath)) {
+          try {
+            const subFileName = path.basename(subtitlePath)
+            const { folder: subFolder } = getBucketPath("subtitles", subFileName)
+            const subResult = await ikUpload(subtitlePath, subFileName, subFolder)
+            if (subResult) {
+              log("INFO", "Subtitles uploaded to ImageKit", { url: subResult.url })
+              resultPaths.subtitleImageKitUrl = subResult.url
+            }
+          } catch (ikSubError) {
+            log("WARN", "Failed to upload subtitles to ImageKit", { error: ikSubError.message })
+          }
+        }
+      }
+
+      resultPaths.localVideoPath = outputPath
+      resolve(resultPaths)
     })
 
     ffmpegProcess.on("error", (err) => {
@@ -299,3 +331,5 @@ export const renderVideo = async (audioPath, videoPath, script, options = {}) =>
     })
   })
 }
+
+

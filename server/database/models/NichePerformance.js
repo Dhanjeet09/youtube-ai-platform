@@ -16,9 +16,6 @@ const nichePerformanceSchema = new mongoose.Schema({
   averageViralScore: { type: Number, default: 0 }
 }, { timestamps: true })
 
-// Index for niche lookups (updateOne / find by niche name)
-nichePerformanceSchema.index({ niche: 1 })
-
 const NichePerformance = mongoose.model("NichePerformance", nichePerformanceSchema)
 
 export default NichePerformance

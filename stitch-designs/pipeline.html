@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoTube AI - Workflow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#ffdad4",
+                    "on-surface-variant": "#ebbbb4",
+                    "on-surface": "#e5e2e1",
+                    "on-primary-fixed-variant": "#930100",
+                    "primary-container": "#ff5540",
+                    "secondary-fixed": "#b4ebff",
+                    "surface-variant": "#353534",
+                    "inverse-primary": "#c00100",
+                    "error": "#ffb4ab",
+                    "on-background": "#e5e2e1",
+                    "surface-tint": "#ffb4a8",
+                    "surface-container-lowest": "#0e0e0e",
+                    "tertiary-fixed": "#60ff99",
+                    "tertiary-container": "#00a657",
+                    "primary": "#ffb4a8",
+                    "on-primary-container": "#5c0000",
+                    "surface-container-low": "#1c1b1b",
+                    "on-error-container": "#ffdad6",
+                    "primary-fixed-dim": "#ffb4a8",
+                    "on-tertiary-container": "#003115",
+                    "surface": "#131313",
+                    "secondary-container": "#00d2fd",
+                    "tertiary": "#00e479",
+                    "on-tertiary": "#003919",
+                    "outline": "#b18780",
+                    "surface-container-high": "#2a2a2a",
+                    "on-tertiary-fixed-variant": "#005228",
+                    "on-tertiary-fixed": "#00210c",
+                    "on-primary-fixed": "#410000",
+                    "on-secondary-container": "#005669",
+                    "on-error": "#690005",
+                    "on-secondary-fixed-variant": "#004e5f",
+                    "surface-container-highest": "#353534",
+                    "inverse-on-surface": "#313030",
+                    "secondary": "#a2e7ff",
+                    "secondary-fixed-dim": "#3cd7ff",
+                    "outline-variant": "#603e39",
+                    "inverse-surface": "#e5e2e1",
+                    "error-container": "#93000a",
+                    "tertiary-fixed-dim": "#00e479",
+                    "on-secondary": "#003642",
+                    "surface-container": "#201f1f",
+                    "on-primary": "#690100",
+                    "surface-dim": "#131313",
+                    "on-secondary-fixed": "#001f27",
+                    "background": "#131313",
+                    "surface-bright": "#3a3939"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "margin-desktop": "40px",
+                    "base": "4px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "lg": "24px",
+                    "gutter": "20px",
+                    "xs": "8px",
+                    "2xl": "48px",
+                    "md": "16px"
+            },
+            "fontFamily": {
+                    "title-md": [
+                            "Inter"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ],
+                    "display-lg": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Inter"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "headline-lg-mobile": [
+                            "Inter"
+                    ],
+                    "mono-data": [
+                            "JetBrains Mono"
+                    ]
+            },
+            "fontSize": {
+                    "title-md": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "mono-data": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0a0a0a;
+            color: #e5e2e1;
+        }
+        
+        .glass-panel {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-element {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glow-active {
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            color: white;
+            border: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e5e2e1;
+        }
+        
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2); 
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                box-shadow: 0 0 0 0 rgba(255, 85, 64, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(255, 85, 64, 0);
+            }
+            100% {
+                transform: scale(0.8);
+                box-shadow: 0 0 0 0 rgba(255, 85, 64, 0);
+            }
+        }
+
+        .step-pulse {
+            animation: pulse-ring 2s infinite;
+        }
+        
+        .gradient-progress {
+            background: linear-gradient(90deg, #ffb4a8 0%, #00d2fd 100%);
+            background-size: 200% 100%;
+            animation: moveGradient 2s linear infinite;
+        }
+
+        @keyframes moveGradient {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex font-body-lg text-on-surface antialiased overflow-hidden">
+<!-- Background Decoration -->
+<div class="fixed inset-0 z-0 pointer-events-none">
+<div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary-container/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-secondary-container/5 rounded-full blur-[100px]"></div>
+</div>
+<!-- SideNavBar (Hidden on Mobile) -->
+<nav class="hidden lg:flex flex-col h-full py-lg px-md bg-surface-variant/5 dark:bg-surface-variant/5 backdrop-blur-[20px] docked left-0 h-screen w-[280px] border-r border-white/10 shadow-none z-20">
+<div class="flex items-center gap-sm mb-xl px-sm">
+<span class="material-symbols-outlined text-[32px] text-primary" data-weight="fill" style="font-variation-settings: 'FILL' 1;">movie</span>
+<div class="flex flex-col">
+<span class="font-display-lg text-[24px] font-black text-primary leading-none tracking-tight">AutoTube AI</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-1">Active</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-sm overflow-y-auto pr-sm pb-xl">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span>Generator</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-primary font-bold border-r-2 border-primary bg-white/5 glow-active hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span>Workflow</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span>Assets</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span>Monetization</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+<div class="mt-auto pt-md border-t border-white/10">
+<div class="px-md py-sm mb-sm bg-primary/10 rounded-lg text-center font-label-caps text-label-caps text-primary border border-primary/20">
+                Scheduler Active
+            </div>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-screen relative z-10 lg:ml-[280px]">
+<!-- TopAppBar -->
+<header class="bg-surface/5 dark:bg-surface/5 backdrop-blur-[20px] docked top-0 w-full border-b border-white/10 shadow-none flex justify-between items-center px-margin-desktop h-20 w-full shrink-0">
+<div class="flex items-center gap-md">
+<span class="lg:hidden font-display-lg text-[24px] font-black text-primary leading-none tracking-tight">AutoTube AI</span>
+<span class="hidden lg:block font-headline-lg text-headline-lg text-on-surface">Video Pipeline</span>
+</div>
+<div class="flex items-center gap-lg">
+<button class="text-on-surface-variant hover:text-primary transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Canvas -->
+<div class="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop pb-2xl md:pb-xl">
+<div class="max-w-4xl mx-auto">
+<div class="mb-lg lg:hidden">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Video Pipeline</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Create a complete video in 6 steps</p>
+</div>
+<div class="hidden lg:block mb-xl">
+<p class="font-body-lg text-body-lg text-on-surface-variant">Create a complete video in 6 steps</p>
+</div>
+<!-- Pipeline Container -->
+<div class="relative">
+<!-- Vertical Line Connector -->
+<div class="absolute left-[19px] top-[40px] bottom-[40px] w-0.5 bg-white/10 z-0"></div>
+<!-- Step 1: Complete -->
+<div class="relative z-10 flex gap-lg mb-xl opacity-70">
+<div class="flex flex-col items-center shrink-0">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center border border-tertiary shadow-[0_0_10px_rgba(0,166,87,0.3)]">
+<span class="material-symbols-outlined text-on-tertiary-container text-sm font-bold" data-icon="check">check</span>
+</div>
+</div>
+<div class="flex-1 pt-2">
+<h3 class="font-title-md text-title-md text-on-surface mb-xs">Step 1: Topic</h3>
+<div class="glass-element rounded-lg p-md mt-sm">
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Selected Topic:</span>
+<span class="font-mono-data text-mono-data text-secondary">"The Future of AGI"</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 2: Complete -->
+<div class="relative z-10 flex gap-lg mb-xl opacity-70">
+<div class="flex flex-col items-center shrink-0">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center border border-tertiary shadow-[0_0_10px_rgba(0,166,87,0.3)]">
+<span class="material-symbols-outlined text-on-tertiary-container text-sm font-bold" data-icon="check">check</span>
+</div>
+</div>
+<div class="flex-1 pt-2">
+<h3 class="font-title-md text-title-md text-on-surface mb-xs">Step 2: Script</h3>
+<div class="glass-element rounded-lg p-md mt-sm flex items-center justify-between">
+<div class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary" data-icon="description">description</span>
+<span class="font-body-sm text-body-sm">Script generated (450 words)</span>
+</div>
+<button class="text-secondary font-label-caps text-label-caps hover:text-secondary-fixed transition-colors">VIEW</button>
+</div>
+</div>
+</div>
+<!-- Step 3: Active -->
+<div class="relative z-10 flex gap-lg mb-xl">
+<div class="flex flex-col items-center shrink-0">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center border-2 border-primary step-pulse shadow-[0_0_15px_rgba(255,85,64,0.5)]">
+<span class="material-symbols-outlined text-on-primary-container text-sm" data-icon="mic">mic</span>
+</div>
+</div>
+<div class="flex-1 pt-2">
+<h3 class="font-title-md text-title-md text-primary mb-xs">Step 3: Voice Generation</h3>
+<div class="glass-panel rounded-xl p-lg mt-sm border-primary/30 glow-active">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md mb-lg">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs">Voice Model</label>
+<select class="w-full bg-surface-container border border-white/10 rounded-lg px-md py-sm text-on-surface font-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+<option>ElevenLabs - Marcus (Deep, Professional)</option>
+<option>ElevenLabs - Sarah (Energetic)</option>
+<option>OpenAI - Onyx</option>
+</select>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs">Pacing</label>
+<select class="w-full bg-surface-container border border-white/10 rounded-lg px-md py-sm text-on-surface font-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+<option>Dynamic (YouTube Standard)</option>
+<option>Documentary (Slow, dramatic)</option>
+</select>
+</div>
+</div>
+<div class="flex justify-center mb-lg">
+<button class="btn-primary rounded-lg px-xl py-sm font-label-caps text-label-caps flex items-center gap-sm hover:scale-105 transition-transform duration-200">
+<span class="material-symbols-outlined text-sm" data-icon="auto_awesome">auto_awesome</span>
+                                        GENERATE AUDIO
+                                    </button>
+</div>
+<!-- Audio Player Mockup -->
+<div class="glass-element rounded-lg p-sm flex items-center gap-md">
+<button class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors shrink-0">
+<span class="material-symbols-outlined text-on-surface" data-icon="play_arrow">play_arrow</span>
+</button>
+<div class="flex-1 h-1 bg-white/10 rounded-full overflow-hidden relative">
+<!-- Waveform mockup -->
+<div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjcGF0dGVybikiLz48ZGVmcz48cGF0dGVybiBpZD0icGF0dGVybiIgd2lkdGg9IjQiIGhlaWdodD0iMTAwJSIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHJlY3QgeD0iMCIgeT0iMjAlIiB3aWR0aD0iMiIgaGVpZ2h0PSI2MCUiIGZpbGw9IiNmZmZmZmY0MCIgcng9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjwvc3ZnPg==')] opacity-50"></div>
+<div class="absolute top-0 left-0 h-full w-[0%] bg-primary"></div>
+</div>
+<span class="font-mono-data text-mono-data text-on-surface-variant shrink-0">00:00 / 04:20</span>
+</div>
+</div>
+<div class="flex justify-end mt-md">
+<button class="btn-secondary rounded-lg px-lg py-sm font-label-caps text-label-caps hover:bg-white/10 transition-colors">
+                                    NEXT STEP
+                                </button>
+</div>
+</div>
+</div>
+<!-- Step 4: Inactive -->
+<div class="relative z-10 flex gap-lg mb-xl opacity-40 grayscale pointer-events-none">
+<div class="flex flex-col items-center shrink-0">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-white/20">
+<span class="font-label-caps text-label-caps text-on-surface-variant">4</span>
+</div>
+</div>
+<div class="flex-1 pt-2">
+<h3 class="font-title-md text-title-md text-on-surface mb-xs">Step 4: Visuals</h3>
+<div class="glass-element rounded-lg p-md mt-sm h-24 flex items-center justify-center border-dashed">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Pending completion of Step 3</span>
+</div>
+</div>
+</div>
+<!-- Step 5: Inactive -->
+<div class="relative z-10 flex gap-lg mb-xl opacity-40 grayscale pointer-events-none">
+<div class="flex flex-col items-center shrink-0">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-white/20">
+<span class="font-label-caps text-label-caps text-on-surface-variant">5</span>
+</div>
+</div>
+<div class="flex-1 pt-2">
+<h3 class="font-title-md text-title-md text-on-surface mb-xs">Step 5: Render</h3>
+<div class="glass-element rounded-lg p-md mt-sm h-16 flex items-center justify-center border-dashed"></div>
+</div>
+</div>
+<!-- Step 6: Inactive -->
+<div class="relative z-10 flex gap-lg opacity-40 grayscale pointer-events-none">
+<div class="flex flex-col items-center shrink-0">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-white/20">
+<span class="font-label-caps text-label-caps text-on-surface-variant">6</span>
+</div>
+</div>
+<div class="flex-1 pt-2">
+<h3 class="font-title-md text-title-md text-on-surface mb-xs">Step 6: Publish</h3>
+<div class="glass-element rounded-lg p-md mt-sm h-16 flex items-center justify-center border-dashed"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Footer for Actions/Status -->
+<div class="bg-surface-container-high/90 backdrop-blur-md border-t border-white/10 p-md flex flex-col md:flex-row justify-between items-center gap-md shrink-0">
+<div class="flex items-center gap-md w-full md:w-auto">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="timer">timer</span>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">ESTIMATED TIME REMAINING</div>
+<div class="font-mono-data text-mono-data text-primary">~4 mins to full render</div>
+</div>
+</div>
+<div class="flex gap-md w-full md:w-auto">
+<button class="w-full md:w-auto px-lg py-sm rounded-lg border border-error/50 text-error font-label-caps text-label-caps hover:bg-error/10 transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-sm" data-icon="cancel">cancel</span>
+                    CANCEL PIPELINE
+                </button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Hidden on Desktop) -->
+<nav class="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center py-sm bg-surface-container-low/80 dark:bg-surface-container-low/80 backdrop-blur-xl border-t border-white/10 shadow-2xl rounded-t-xl docked bottom-0 w-full rounded-t-xl tap-highlight-transparent">
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-white/5 p-xs rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-label-caps text-[10px]">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-white/5 p-xs rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="add_circle">add_circle</span>
+<span class="font-label-caps text-[10px]">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary active:bg-white/5 p-xs rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mb-1 text-primary drop-shadow-[0_0_8px_rgba(255,85,64,0.5)]" data-icon="sync_alt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">sync_alt</span>
+<span class="font-label-caps text-[10px] text-primary">Flow</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-white/5 p-xs rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="bar_chart">bar_chart</span>
+<span class="font-label-caps text-[10px]">Data</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-white/5 p-xs rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="menu">menu</span>
+<span class="font-label-caps text-[10px]">Menu</span>
+</a>
+</nav>
+</body></html>

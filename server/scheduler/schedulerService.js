@@ -6,6 +6,12 @@ import { registerVideoPerformance, updateNichePerformance } from "../niche/niche
 import { retryWithBackoff } from "../utils/retry.js"
 import { log as logger } from "../utils/logger.js"
 import { ContentQueue, MatchEvent, ContentTemplate } from "../database/models/index.js"
+import { getRandomPoems } from "../modules/poem/poems.js"
+import { generateVoice } from "../modules/audio/service.js"
+import { downloadStockVideo } from "../modules/video/service.js"
+import { renderVideo } from "../pipeline/renderService.js"
+import { generateThumbnail } from "../modules/thumbnail/service.js"
+import path from "path"
 
 const MAX_RETRIES = 3
 
@@ -13,6 +19,7 @@ const MAX_RETRIES = 3
 let schedulerEnabled = process.env.SERVERLESS !== "true"
 const cronTasks = []
 
+// ─── Hindi Poem Schedule (3 videos/day) ─────────────────────────
 const SCHEDULE_TIMES_IST = ["10:00 AM", "2:00 PM", "6:00 PM"]
 const SCHEDULE_CRON = ["0 10 * * *", "0 14 * * *", "0 18 * * *"]
 
@@ -97,28 +104,72 @@ const uploadWithRetry = async (filePath, title, tags) => {
 const runJob = async (label) => {
   const startTime = Date.now()
 
-  log("INFO", `[${label}] Job started`)
+  log("INFO", `[${label}] Hindi Poem Job started`)
 
   try {
-    log("INFO", "Running video pipeline")
-    const result = await createVideoPipeline({ quality: "medium" })
+    // Get a random Hindi poem
+    const poems = getRandomPoems(1)
+    const poem = poems[0]
+    
+    if (!poem) {
+      throw new Error("No Hindi poems available")
+    }
+    
+    log("INFO", "Selected poem", { title: poem.title, id: poem.id })
 
-    if (!result?.finalVideo) {
-      throw new Error("Pipeline failed: finalVideo missing")
+    // Step 1: Generate Hindi voice
+    log("INFO", "Step 1: Generating Hindi voice...")
+    const audioResult = await retryWithBackoff(
+      () => generateVoice(poem.lines, { language: "hinglish" }),
+      { name: "Hindi TTS", maxRetries: 2 }
+    )
+    const audioPath = typeof audioResult === "string" ? audioResult : audioResult.path
+    log("INFO", "Voice generated", { filename: path.basename(audioPath) })
+
+    // Step 2: Download background video
+    log("INFO", "Step 2: Downloading background video...")
+    const videoResult = await retryWithBackoff(
+      () => downloadStockVideo(poem.background || "nature abstract"),
+      { name: "Background video", maxRetries: 2 }
+    )
+    const videoPath = typeof videoResult === "string" ? videoResult : videoResult.path
+    log("INFO", "Background downloaded", { filename: path.basename(videoPath) })
+
+    // Step 3: Render video
+    log("INFO", "Step 3: Rendering short video...")
+    const renderResult = await retryWithBackoff(
+      () => renderVideo(audioPath, videoPath, poem.lines, { 
+        quality: "medium", 
+        orientation: "portrait",
+        generateSubtitles: true 
+      }),
+      { name: "Render video", maxRetries: 2 }
+    )
+    
+    const finalVideo = typeof renderResult === "string" ? renderResult : renderResult.videoPath
+    const localVideoPath = typeof renderResult === "string" ? finalVideo : (renderResult.localVideoPath || finalVideo)
+    
+    if (!fs.existsSync(localVideoPath)) {
+      throw new Error(`Video file not found: ${localVideoPath}`)
     }
 
-    const filePath = result.finalVideo
-
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`Video file not found: ${filePath}`)
+    // Step 4: Generate thumbnail
+    let thumbnailPath = null
+    try {
+      const thumbResult = await generateThumbnail(localVideoPath, { timestamp: "00:01" })
+      thumbnailPath = typeof thumbResult === "string" ? thumbResult : thumbResult.path
+      log("INFO", "Thumbnail generated")
+    } catch (err) {
+      log("WARN", "Thumbnail generation failed", { error: err.message })
     }
 
-    const title = result.title || "AI Tools You Must Try 🔥"
-    const tags = Array.isArray(result.tags) ? result.tags : ["AI", "Tech", "Shorts"]
-    const niche = result.niche || "Tech"
+    const title = `${poem.title} | Hindi Shayari | #shorts`
+    const tags = ["Hindi Shayari", "Poetry", "Motivation", "Shorts", "Hindi Poem"]
+    const niche = "Poetry"
 
-    log("INFO", "Uploading video", { title, tags: tags.join(", ") })
-    const upload = await uploadWithRetry(filePath, title, tags)
+    // Step 5: Upload to YouTube
+    log("INFO", "Step 5: Uploading to YouTube...")
+    const upload = await uploadWithRetry(localVideoPath, title, tags)
 
     await registerVideoPerformance(niche, upload.id)
     log("INFO", "Video registered", { niche, videoId: upload.id })
@@ -137,24 +188,26 @@ const runJob = async (label) => {
     }, 60000)
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2)
-    log("INFO", `[${label}] Job completed`, {
+    log("INFO", `[${label}] Hindi Poem Job completed`, {
       videoId: upload.id,
+      poem: poem.title,
       duration: `${duration}s`
     })
 
     return {
       success: true,
-      videoPath: filePath,
+      videoPath: localVideoPath,
       title,
       tags,
       videoId: upload.id,
       niche,
+      poem: poem.title,
       duration: `${duration}s`
     }
 
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2)
-    log("ERROR", `[${label}] Job failed`, {
+    log("ERROR", `[${label}] Hindi Poem Job failed`, {
       error: error.message,
       duration: `${duration}s`
     })
@@ -457,6 +510,9 @@ const processSingleQueueItem = async (item) => {
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2)
 
+    // Extract ImageKit URLs from pipeline result (null if ImageKit not configured)
+    const imageKitUrls = result.imageKitUrls || {}
+
     await ContentQueue.updateOne(
       { _id: item._id },
       {
@@ -469,8 +525,14 @@ const processSingleQueueItem = async (item) => {
             videoId: result.videoId,
             niche: result.niche,
             finalVideo: result.finalVideo,
-            duration: `${duration}s`
-          }
+            duration: `${duration}s`,
+            imageKitUrls
+          },
+          // Top-level URL fields for easy querying
+          videoUrl: imageKitUrls.video || null,
+          thumbnailUrl: imageKitUrls.thumbnail || null,
+          audioUrl: imageKitUrls.audio || null,
+          subtitleUrl: imageKitUrls.subtitles || null
         }
       }
     )
@@ -719,10 +781,10 @@ export const startScheduler = () => {
   // Guard against double-init: clear existing tasks before re-populating
   cronTasks.length = 0
 
-  const mode = process.env.WORLD_CUP_MODE === "true" ? "World Cup" : "Standard"
+  const mode = process.env.WORLD_CUP_MODE === "true" ? "World Cup" : "Hindi Poem"
   const tzOptions = { timezone: "Asia/Kolkata" }
 
-  // ─── Existing fixed cron slots ─────────────────────────────────────────
+  // ─── Hindi Poem cron slots (3 videos/day) ──────────────────────────────
   addCronTask("0 10 * * *", () => runJob("MORNING").catch(() => {}), tzOptions)
   addCronTask("0 14 * * *", () => runJob("AFTERNOON").catch(() => {}), tzOptions)
   addCronTask("0 18 * * *", () => runJob("EVENING").catch(() => {}), tzOptions)

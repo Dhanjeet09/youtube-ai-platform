@@ -26,8 +26,6 @@
     "docker:run": "docker run -p 5000:5000 --env-file .env autotube:latest"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.600.0",
-    "@aws-sdk/s3-request-presigner": "^3.600.0",
     "axios": "^1.13.6",
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
@@ -39,6 +37,7 @@
     "googleapis": "^171.4.0",
     "groq-sdk": "^0.37.0",
     "helmet": "^8.0.0",
+    "imagekit": "^5.1.0",
     "mongoose": "^8.23.0",
     "node-cron": "^3.0.3",
     "youtube-search-api": "^2.0.1"

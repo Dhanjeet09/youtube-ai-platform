@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoTube AI - Monetization</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#ffdad4",
+                        "on-surface-variant": "#ebbbb4",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-fixed-variant": "#930100",
+                        "primary-container": "#ff5540",
+                        "secondary-fixed": "#b4ebff",
+                        "surface-variant": "#353534",
+                        "inverse-primary": "#c00100",
+                        "error": "#ffb4ab",
+                        "on-background": "#e5e2e1",
+                        "surface-tint": "#ffb4a8",
+                        "surface-container-lowest": "#0e0e0e",
+                        "tertiary-fixed": "#60ff99",
+                        "tertiary-container": "#00a657",
+                        "primary": "#ffb4a8",
+                        "on-primary-container": "#5c0000",
+                        "surface-container-low": "#1c1b1b",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#ffb4a8",
+                        "on-tertiary-container": "#003115",
+                        "surface": "#131313",
+                        "secondary-container": "#00d2fd",
+                        "tertiary": "#00e479",
+                        "on-tertiary": "#003919",
+                        "outline": "#b18780",
+                        "surface-container-high": "#2a2a2a",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-tertiary-fixed": "#00210c",
+                        "on-primary-fixed": "#410000",
+                        "on-secondary-container": "#005669",
+                        "on-error": "#690005",
+                        "on-secondary-fixed-variant": "#004e5f",
+                        "surface-container-highest": "#353534",
+                        "inverse-on-surface": "#313030",
+                        "secondary": "#a2e7ff",
+                        "secondary-fixed-dim": "#3cd7ff",
+                        "outline-variant": "#603e39",
+                        "inverse-surface": "#e5e2e1",
+                        "error-container": "#93000a",
+                        "tertiary-fixed-dim": "#00e479",
+                        "on-secondary": "#003642",
+                        "surface-container": "#201f1f",
+                        "on-primary": "#690100",
+                        "surface-dim": "#131313",
+                        "on-secondary-fixed": "#001f27",
+                        "background": "#131313",
+                        "surface-bright": "#3a3939"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "margin-desktop": "40px",
+                        "base": "4px",
+                        "margin-mobile": "16px",
+                        "sm": "12px",
+                        "lg": "24px",
+                        "gutter": "20px",
+                        "xs": "8px",
+                        "2xl": "48px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "title-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "title-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "mono-data": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #0a0a0a; color: #e5e2e1; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-active { box-shadow: 0 0 20px rgba(255, 0, 0, 0.15); }
+        .glow-success { box-shadow: 0 0 20px rgba(0, 228, 121, 0.15); }
+        .youtube-red-gradient { background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); }
+    </style>
+</head>
+<body class="min-h-screen bg-background font-body-lg text-on-background flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden lg:flex flex-col h-full py-lg px-md bg-surface-variant/5 dark:bg-surface-variant/5 backdrop-blur-[20px] docked left-0 h-screen w-[280px] border-r border-white/10 shadow-none z-40 fixed">
+<div class="flex items-center gap-sm mb-xl">
+<span class="material-symbols-outlined text-primary font-display-lg text-display-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<div>
+<h1 class="font-display-lg text-display-lg font-black text-primary text-[24px] leading-tight">AutoTube AI</h1>
+<p class="font-label-caps text-label-caps text-tertiary">Active</p>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto space-y-xs">
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-150">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-150">auto_awesome</span>
+                Generator
+            </a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-150">account_tree</span>
+                Workflow
+            </a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-150">folder_open</span>
+                Assets
+            </a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-150">insights</span>
+                Analytics
+            </a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-primary font-bold border-r-2 border-primary bg-white/5 group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-150">payments</span>
+                Monetization
+            </a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-150">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-auto pt-lg space-y-md">
+<button class="w-full py-sm rounded-lg bg-surface-container-high border border-white/10 text-on-surface font-label-caps text-label-caps flex items-center justify-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> Scheduler Active
+            </button>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant font-body-lg hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-[280px] flex flex-col min-h-screen relative overflow-y-auto">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-desktop h-20 w-full ml-0 bg-surface/5 dark:bg-surface/5 backdrop-blur-[20px] docked top-0 border-b border-white/10 shadow-none z-30 sticky">
+<div class="lg:hidden flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary font-display-lg text-display-lg text-[24px]">play_circle</span>
+</div>
+<div class="flex-1 flex justify-end items-center gap-md">
+<button class="text-on-surface-variant hover:text-primary transition-all duration-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all duration-300">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-margin-desktop lg:p-margin-desktop p-margin-mobile flex-1 flex flex-col gap-lg max-w-7xl mx-auto w-full">
+<div class="mb-sm">
+<h2 class="font-headline-lg text-headline-lg md:font-headline-lg md:text-headline-lg font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold tracking-tight">Monetization</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1">Estimate your YouTube revenue and explore affiliate opportunities.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Calculator Section (Left) -->
+<div class="lg:col-span-5 flex flex-col gap-gutter">
+<div class="glass-panel rounded-xl p-lg flex flex-col gap-lg glow-active">
+<div class="flex justify-between items-center border-b border-white/10 pb-sm">
+<h3 class="font-title-md text-title-md text-on-surface">Revenue Calculator</h3>
+<span class="material-symbols-outlined text-primary">calculate</span>
+</div>
+<div class="space-y-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant block">Monthly Views</label>
+<div class="flex items-center gap-md">
+<input class="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" id="viewsSlider" max="10000000" min="10000" type="range" value="500000"/>
+<input class="w-24 bg-surface-container-high border border-white/10 rounded-md px-2 py-1 text-right font-mono-data text-mono-data text-on-surface focus:outline-none focus:border-primary" id="viewsInput" type="text" value="500,000"/>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant block">Niche / Category</label>
+<select class="w-full bg-surface-container-high border border-white/10 rounded-lg px-md py-sm text-on-surface font-body-sm focus:outline-none focus:border-primary appearance-none">
+<option>Finance &amp; Investing</option>
+<option>Technology &amp; AI</option>
+<option>Gaming</option>
+<option>Entertainment</option>
+<option>Vlogging</option>
+</select>
+<div class="flex justify-between text-xs text-on-surface-variant px-1">
+<span>Est. RPM:</span>
+<span class="font-mono-data text-tertiary">$12.50</span>
+</div>
+</div>
+<div class="mt-auto pt-lg border-t border-white/10">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Estimated Monthly Revenue</p>
+<div class="flex items-baseline gap-xs text-tertiary">
+<span class="font-headline-lg text-headline-lg">$</span>
+<span class="font-display-lg text-display-lg" id="revenueTotal">6,250</span>
+<span class="font-body-sm text-body-sm">.00</span>
+</div>
+<button class="w-full mt-lg py-sm rounded-lg youtube-red-gradient text-white font-title-md text-title-md hover:opacity-90 transition-opacity">
+                                Generate Strategy
+                            </button>
+</div>
+</div>
+</div>
+<!-- Projections & Programs (Right) -->
+<div class="lg:col-span-7 flex flex-col gap-gutter">
+<div class="glass-panel rounded-xl p-lg flex flex-col h-[300px]">
+<h3 class="font-title-md text-title-md text-on-surface mb-md">Revenue Projection</h3>
+<div class="flex-1 w-full relative border-b border-l border-white/10">
+<!-- Faux Chart implementation for UI representation -->
+<div class="absolute bottom-0 left-0 w-full h-[60%] bg-gradient-to-t from-primary/20 to-transparent"></div>
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none">
+<polyline fill="none" points="0,200 50,180 150,150 250,90 350,120 450,40" stroke="#ffb4a8" stroke-width="2"></polyline>
+</svg>
+<div class="absolute bottom-0 w-full flex justify-between text-[10px] text-on-surface-variant translate-y-4">
+<span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-xl p-lg">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-title-md text-title-md text-on-surface">Top Affiliate Programs</h3>
+<button class="text-primary font-body-sm text-body-sm hover:underline">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="bg-surface-container-high rounded-lg p-md border border-white/5 hover:border-primary/50 transition-colors cursor-pointer group">
+<div class="flex items-center gap-sm mb-sm">
+<div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+</div>
+<h4 class="font-title-md text-title-md text-on-surface text-[16px]">Webull</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-sm">High converting finance affiliate program. Free stocks for signups.</p>
+<div class="flex justify-between items-center text-xs">
+<span class="text-tertiary bg-tertiary/10 px-2 py-1 rounded-full">Up to $50/CPA</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-[16px]">arrow_forward</span>
+</div>
+</div>
+<div class="bg-surface-container-high rounded-lg p-md border border-white/5 hover:border-primary/50 transition-colors cursor-pointer group">
+<div class="flex items-center gap-sm mb-sm">
+<div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+<span class="material-symbols-outlined text-[18px]">cloud</span>
+</div>
+<h4 class="font-title-md text-title-md text-on-surface text-[16px]">Hostinger</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-sm">Reliable web hosting. Excellent for tech and tutorial channels.</p>
+<div class="flex justify-between items-center text-xs">
+<span class="text-tertiary bg-tertiary/10 px-2 py-1 rounded-full">60% Rev Share</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-[16px]">arrow_forward</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center py-sm bg-surface-container-low/80 dark:bg-surface-container-low/80 backdrop-blur-xl docked bottom-0 w-full rounded-t-xl border-t border-white/10 shadow-2xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:bg-white/5 tap-highlight-transparent p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:bg-white/5 tap-highlight-transparent p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined mb-1">add_circle</span>
+<span class="font-label-caps text-label-caps">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:bg-white/5 tap-highlight-transparent p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined mb-1">sync_alt</span>
+<span class="font-label-caps text-label-caps">Flow</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary active:bg-white/5 tap-highlight-transparent p-2 rounded-lg relative" href="#">
+<!-- Active indicator for Data/Monetization loosely mapped to bottom nav -->
+<div class="absolute inset-0 bg-primary/10 rounded-lg -z-10"></div>
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">bar_chart</span>
+<span class="font-label-caps text-label-caps">Data</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:bg-white/5 tap-highlight-transparent p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined mb-1">menu</span>
+<span class="font-label-caps text-label-caps">Menu</span>
+</a>
+</nav>
+<script>
+        // Simple slider sync for demonstration
+        const slider = document.getElementById('viewsSlider');
+        const input = document.getElementById('viewsInput');
+        
+        slider.addEventListener('input', function() {
+            input.value = Number(this.value).toLocaleString();
+        });
+    </script>
+</body></html>

@@ -3,8 +3,8 @@ import fs from "fs"
 import path from "path"
 import crypto from "crypto"
 import { log as logger } from "../../utils/logger.js"
-import { isR2Configured } from "../../config/r2.js"
-import { uploadFile, getBucketPath } from "../../services/r2Service.js"
+import { isImageKitConfigured } from "../../config/imagekit.js"
+import { uploadFile as ikUpload, getBucketPath } from "../../services/imagekitService.js"
 
 const log = (level, message, data = {}) => logger(level, `[VIDEO] ${message}`, data)
 
@@ -167,22 +167,25 @@ export const downloadStockVideo = async (query, options = {}) => {
     // 🔴 FIX: Log only basename, not full path
     log("INFO", "Video downloaded", { filename: fileName, size: `${fileSize}MB` })
 
-    // Upload to R2 if configured (as side effect — pipeline still needs local file for FFmpeg)
-    if (isR2Configured()) {
+    // Upload to ImageKit if configured (as side effect — pipeline still needs local file for FFmpeg)
+    let imageKitUrl = null
+    if (isImageKitConfigured()) {
       try {
-        const r2Key = getBucketPath("videos", fileName)
-        const result = await uploadFile(r2Key, outputPath, "video/mp4")
+        const { folder } = getBucketPath("videos", fileName)
+        const result = await ikUpload(outputPath, fileName, folder)
         if (result) {
-          log("INFO", "Video uploaded to R2", { key: result.key, local: outputPath })
+          log("INFO", "Video uploaded to ImageKit", { url: result.url, local: outputPath })
+          imageKitUrl = result.url
         }
-      } catch (r2Error) {
-        log("WARN", "Failed to upload video to R2", { error: r2Error.message })
+      } catch (ikError) {
+        log("WARN", "Failed to upload video to ImageKit", { error: ikError.message })
       }
     }
 
-    videoCache.set(cacheKey, { path: outputPath, timestamp: Date.now() })
+    videoCache.set(cacheKey, { path: outputPath, imageKitUrl, timestamp: Date.now() })
 
-    return outputPath
+    // Return object with local path and ImageKit URL
+    return { path: outputPath, imageKitUrl }
 
   } catch (error) {
     log("ERROR", "Download failed", { query, error: error.message })

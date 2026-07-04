@@ -58,7 +58,6 @@ services:
       - MONGODB_URI=mongodb://mongodb:27017/youtube-ai
       - REDIS_URL=redis://redis:6379
       - NODE_ENV=development
-      - R2_ENABLED=false                              # Use local storage in dev
     volumes:
       - app_storage:/app/storage
       # Mount source for hot-reload during development

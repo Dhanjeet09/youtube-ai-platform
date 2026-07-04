@@ -16,6 +16,9 @@ import crypto from "crypto"
 import path from "path"
 import fs from "fs"
 
+// oauth2Client is now the getOAuth2Client function — call it to get the client
+const getClient = oauth2Client
+
 /**
  * Generate a cryptographically random state nonce and store it in MongoDB.
  * Uses OAuthState model with TTL index for automatic expiration.
@@ -51,13 +54,13 @@ const ALLOWED_POSTMESSAGE_ORIGINS = [
 
 export const getAuthUrl = async (req, res) => {
   const { state } = await generateOAuthState()
-  const url = oauth2Client.generateAuthUrl({
+  const url = getClient().generateAuthUrl({
     access_type: "offline",
     scope: ["https://www.googleapis.com/auth/youtube.upload"],
     prompt: "consent",
     state, // CSRF protection
   })
-  res.json({ authUrl: url })
+  res.json({ success: true, data: { authUrl: url } })
 }
 
 export const getAuthStatus = async (req, res) => {
@@ -66,15 +69,15 @@ export const getAuthStatus = async (req, res) => {
       "../../database/models/ServerCredential.js"
     )
     const tokens = await ServerCredential.retrieve("youtube-oauth")
-    res.json({ authenticated: !!tokens })
+    res.json({ success: true, data: { authenticated: !!tokens } })
   } catch {
-    res.json({ authenticated: false })
+    res.json({ success: true, data: { authenticated: false } })
   }
 }
 
 export const youtubeAuth = async (req, res) => {
   const { state } = await generateOAuthState()
-  const url = oauth2Client.generateAuthUrl({
+  const url = getClient().generateAuthUrl({
     access_type: "offline",
     scope: ["https://www.googleapis.com/auth/youtube.upload"],
     prompt: "consent",
@@ -102,8 +105,8 @@ export const youtubeCallback = async (req, res) => {
     }
 
     // Exchange code for tokens
-    const { tokens } = await oauth2Client.getToken(code)
-    oauth2Client.setCredentials(tokens)
+    const { tokens } = await getClient().getToken(code)
+    getClient().setCredentials(tokens)
 
     // Persist tokens securely to MongoDB (encrypted at rest via ServerCredential)
     await saveTokens(tokens)
@@ -137,6 +140,20 @@ export const youtubeCallback = async (req, res) => {
 
 export const uploadVideo = async (req, res, next) => {
   try {
+    // 🔴 FIX: Check YouTube auth status before accepting upload requests.
+    // Returns a clear 400 instead of a cryptic Google API error when
+    // tokens are missing.
+    const { default: ServerCredential } = await import(
+      "../../database/models/ServerCredential.js"
+    )
+    const tokens = await ServerCredential.retrieve("youtube-oauth")
+    if (!tokens) {
+      return res.status(400).json({
+        success: false,
+        message: "YouTube not connected. Please authenticate first.",
+      })
+    }
+
     const { filePath, title, description } = req.body
 
     // Input validation
@@ -177,15 +194,19 @@ export const uploadVideo = async (req, res, next) => {
       })
     }
 
-    // Path traversal protection: ensure the resolved path is within the
-    // expected assets or storage directory. Prevents reading arbitrary server files.
+    // 🔴 FIX: Path traversal protection — ensure the resolved path is within
+    // the expected assets or storage directory. The `startsWith` check now
+    // includes a trailing separator to prevent bypass via partial name matches
+    // (e.g. "assets/generated-malicious" matching "assets/generated").
     const resolvedPath = path.resolve(filePath)
     const allowedDirs = [
       path.resolve("assets/generated"),
       path.resolve("storage"),
     ]
 
-    const isAllowed = allowedDirs.some((dir) => resolvedPath.startsWith(dir))
+    const isAllowed = allowedDirs.some(
+      (dir) => resolvedPath.startsWith(dir + path.sep) || resolvedPath === dir
+    )
     if (!isAllowed) {
       return res.status(400).json({
         success: false,

@@ -1,5 +1,6 @@
 /**
  * TabBar - Horizontal tab bar with active indicator
+ * Kinetic Glass design: glass container with gradient active state
  * 
  * Props:
  *   tabs: array of { id, label, icon? }
@@ -9,18 +10,18 @@
  */
 export default function TabBar({ tabs, activeTab, onChange, className = '' }) {
   return (
-    <div className={`glass rounded-2xl p-1.5 sm:p-2 mb-6 flex gap-1 sm:gap-2 overflow-x-auto ${className}`}>
+    <div className={`glass rounded-2xl p-1.5 mb-6 flex gap-1 overflow-x-auto ${className}`}>
       {tabs.map(tab => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
-          className={`flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap touch-target ${
+          className={`flex-1 px-4 py-2.5 rounded-xl transition-all text-body-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap touch-target ${
             activeTab === tab.id
-              ? 'gradient text-white shadow-lg shadow-red-500/20'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'gradient-primary text-white shadow-glow-red'
+              : 'text-gray-400 hover:text-white hover:bg-white/[0.05]'
           }`}
         >
-          {tab.icon && <span className="flex-shrink-0">{tab.icon}</span>}
+          {tab.icon && <span className="flex-shrink-0 text-base">{tab.icon}</span>}
           <span>{tab.label}</span>
         </button>
       ))}

@@ -73,11 +73,15 @@ NODE_ENV=production
 SERVERLESS=true
 MONGODB_URI=mongodb+srv://...
 GROQ_API_KEY=gsk_...
+PEXELS_API_KEY=...
 YOUTUBE_API_KEY=AIza...
 YT_CLIENT_ID=xxx.apps.googleusercontent.com
 YT_CLIENT_SECRET=GOCSPX-...
 YT_REDIRECT_URI=https://your-backend.onrender.com/api/youtube/callback
 FRONTEND_URL=https://your-frontend.vercel.app
+IMAGEKIT_PUBLIC_KEY=...
+IMAGEKIT_PRIVATE_KEY=...
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_id
 ```
 
 ### Frontend (Vercel)
@@ -104,6 +108,22 @@ VITE_API_URL=https://your-backend.onrender.com/api
 - **Frontend**: React, Tailwind CSS, Vite
 - **Video**: FFmpeg, Pexels API
 - **AI**: Groq (LLM), Google TTS (Voice)
+- **Media CDN**: [ImageKit](https://imagekit.io) — image/video optimisation, transformations, and CDN delivery
+
+## ImageKit Setup
+
+ImageKit handles media storage, optimisation, and CDN delivery for all generated assets.
+
+1. Create a free account at [imagekit.io](https://imagekit.io)
+2. From the dashboard, go to **Developer → API Keys**
+3. Copy the **Public Key**, **Private Key**, and **URL Endpoint**
+4. Add them to your `.env` file (see Environment Variables above)
+5. In the ImageKit dashboard, set up folder structure under **Media Library**:
+   - `audio/` — Generated TTS audio files
+   - `videos/` — Downloaded stock videos
+   - `final-videos/` — Rendered final output videos
+   - `subtitles/` — Generated subtitle files
+   - `thumbnails/` — Generated thumbnail images
 
 ## Demo URLs
 

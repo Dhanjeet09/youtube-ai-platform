@@ -3,8 +3,8 @@ import { access, mkdir, writeFile } from "fs/promises"
 import path from "path"
 import { fileURLToPath } from "url"
 import { log as logger } from "./logger.js"
-import { isR2Configured } from "../config/r2.js"
-import { uploadFile, getBucketPath } from "../services/r2Service.js"
+import { isImageKitConfigured } from "../config/imagekit.js"
+import { uploadFile as ikUpload, getBucketPath } from "../services/imagekitService.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -95,16 +95,16 @@ export const createSubtitleFile = async (script, audioDuration) => {
   const fileName = path.basename(subtitlePath)
   log("INFO", "Subtitles created", { path: subtitlePath, captionCount: sentences.length })
 
-  // Upload to R2 if configured
-  if (isR2Configured()) {
+  // Upload to ImageKit if configured
+  if (isImageKitConfigured()) {
     try {
-      const r2Key = getBucketPath("subtitles", fileName)
-      const result = await uploadFile(r2Key, subtitlePath, "text/plain; charset=utf-8")
+      const { folder } = getBucketPath("subtitles", fileName)
+      const result = await ikUpload(subtitlePath, fileName, folder)
       if (result) {
-        log("INFO", "Subtitles uploaded to R2", { key: result.key })
+        log("INFO", "Subtitles uploaded to ImageKit", { url: result.url })
       }
-    } catch (r2Error) {
-      log("WARN", "Failed to upload subtitles to R2", { error: r2Error.message })
+    } catch (ikError) {
+      log("WARN", "Failed to upload subtitles to ImageKit", { error: ikError.message })
     }
   }
 

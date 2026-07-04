@@ -1,28 +1,28 @@
 /**
- * Asset Service — R2-backed with local filesystem fallback
+ * Asset Service — ImageKit-backed with local filesystem fallback
  *
  * All generated assets (audio, video, subtitles, thumbnails) are stored
- * in Cloudflare R2 in production, with a fallback to local disk for
- * development environments where R2 is not configured.
+ * in ImageKit in production, with a fallback to local disk for
+ * development environments where ImageKit is not configured.
  *
- * BUCKET PATH CONVENTIONS:
- *   audio/{filename}          — Generated TTS audio files (.mp3, .wav)
- *   videos/{filename}         — Downloaded stock videos (.mp4, .webm)
- *   final-videos/{filename}   — Rendered final output videos (.mp4)
- *   subtitles/{filename}      — Generated subtitle files (.srt, .vtt)
- *   thumbnails/{filename}     — Generated thumbnail images (.jpg, .png)
+ * FOLDER PATH CONVENTIONS:
+ *   autotube/audio/          — Generated TTS audio files (.mp3, .wav)
+ *   autotube/videos/         — Downloaded stock videos (.mp4, .webm)
+ *   autotube/final-videos/   — Rendered final output videos (.mp4)
+ *   autotube/subtitles/      — Generated subtitle files (.srt, .vtt)
+ *   autotube/thumbnails/     — Generated thumbnail images (.jpg, .png)
  *
  * FALLBACK BEHAVIOUR:
- * When R2 is not configured (R2_ENABLED=false or missing credentials),
- * operations fall back to the local filesystem under assets/generated/.
+ * When ImageKit is not configured, operations fall back to the local
+ * filesystem under assets/generated/.
  */
 
 import fs from "fs"
 import { readdir, stat, access, unlink } from "fs/promises"
 import path from "path"
 import { fileURLToPath } from "url"
-import { isR2Configured } from "../config/r2.js"
-import * as r2Service from "../services/r2Service.js"
+import { isImageKitConfigured } from "../config/imagekit.js"
+import * as imagekitService from "../services/imagekitService.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -44,12 +44,12 @@ const ASSET_EXTENSIONS = {
   thumbnails: [".jpg", ".jpeg", ".png"],
 }
 
-const R2_PREFIXES = {
-  audio: "audio",
-  videos: "videos",
-  final: "final-videos",
-  subtitles: "subtitles",
-  thumbnails: "thumbnails",
+const IK_FOLDERS = {
+  audio: "autotube/audio",
+  videos: "autotube/videos",
+  final: "autotube/final-videos",
+  subtitles: "autotube/subtitles",
+  thumbnails: "autotube/thumbnails",
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -60,64 +60,62 @@ const formatSize = (bytes) => {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB"
 }
 
-const getAssetTypeFromR2Key = (key) => {
-  for (const [type, prefix] of Object.entries(R2_PREFIXES)) {
-    if (key.startsWith(prefix + "/")) return type
-  }
-  return null
-}
-
-const getNameFromR2Key = (key) => {
-  return path.basename(key)
-}
-
 const matchesExtension = (name, extensions) => {
   if (!extensions || extensions.length === 0) return true
   const ext = path.extname(name).toLowerCase()
   return extensions.some((e) => e === ext)
 }
 
-// ─── R2-Based Operations ────────────────────────────────────────────
+// ─── ImageKit-Based Operations ───────────────────────────────────────
 
-const getAssetsFromR2 = async (prefix, extensions) => {
-  const files = await r2Service.listFiles(prefix)
+const getAssetsFromImageKit = async (folder, extensions) => {
+  const files = await imagekitService.listFiles(folder)
+  if (!files || files.length === 0) return []
+
   const result = []
 
   for (const file of files) {
-    if (!matchesExtension(file.key, extensions)) continue
+    if (!matchesExtension(file.name, extensions)) continue
     result.push({
-      name: getNameFromR2Key(file.key),
-      key: file.key,
-      path: file.key,
+      name: file.name,
+      key: file.filePath,
+      path: file.filePath,
+      url: file.url,
       size: file.size,
       sizeFormatted: formatSize(file.size),
       created: file.lastModified,
       modified: file.lastModified,
-      storage: "r2",
+      storage: "imagekit",
     })
   }
 
   return result.sort((a, b) => new Date(b.modified) - new Date(a.modified))
 }
 
-const deleteAssetFromR2 = async (key) => {
-  // Security: validate the key doesn't try path traversal
-  if (key.includes("..")) {
-    throw new Error("Invalid key path")
+const deleteAssetFromImageKit = async (filePath) => {
+  if (filePath.includes("..")) {
+    throw new Error("Invalid file path")
   }
 
-  const exists = await r2Service.fileExists(key)
-  if (!exists) {
-    throw new Error("File not found in R2")
+  // For ImageKit we need to find the fileId; since we don't store it,
+  // we delete by searching for the file by name
+  const fileName = path.basename(filePath)
+  const folder = path.dirname(filePath)
+
+  const files = await imagekitService.listFiles(folder)
+  const file = files.find((f) => f.name === fileName)
+
+  if (!file) {
+    throw new Error("File not found in ImageKit")
   }
 
-  await r2Service.deleteFile(key)
-  return { success: true, path: key }
+  await imagekitService.deleteFile(file.fileId)
+  return { success: true, path: filePath }
 }
 
-const deleteAssetsByPrefixFromR2 = async (prefix) => {
-  const count = await r2Service.deleteFilesByPrefix(prefix)
-  return { deleted: prefix, count }
+const deleteAssetsByFolderFromImageKit = async (folder) => {
+  const count = await imagekitService.deleteFilesByFolder(folder)
+  return { deleted: folder, count }
 }
 
 // ─── Local Filesystem Fallback Operations ────────────────────────────
@@ -154,18 +152,17 @@ const getFilesFromLocal = async (dir, extensions = []) => {
 }
 
 /**
- * Get all assets, optionally combined from R2 and local storage.
- * Returns assets from R2 if configured, otherwise from local disk.
- * In migration mode (R2 configured but local assets exist), both are returned.
+ * Get all assets, optionally combined from ImageKit and local storage.
+ * Returns assets from ImageKit if configured, otherwise from local disk.
  */
 export const getAllAssets = async () => {
-  if (isR2Configured()) {
+  if (isImageKitConfigured()) {
     const [audio, videos, final, subtitles, thumbnails] = await Promise.all([
-      getAssetsFromR2(R2_PREFIXES.audio, ASSET_EXTENSIONS.audio),
-      getAssetsFromR2(R2_PREFIXES.videos, ASSET_EXTENSIONS.videos),
-      getAssetsFromR2(R2_PREFIXES.final, ASSET_EXTENSIONS.final),
-      getAssetsFromR2(R2_PREFIXES.subtitles, ASSET_EXTENSIONS.subtitles),
-      getAssetsFromR2(R2_PREFIXES.thumbnails, ASSET_EXTENSIONS.thumbnails),
+      getAssetsFromImageKit(IK_FOLDERS.audio, ASSET_EXTENSIONS.audio),
+      getAssetsFromImageKit(IK_FOLDERS.videos, ASSET_EXTENSIONS.videos),
+      getAssetsFromImageKit(IK_FOLDERS.final, ASSET_EXTENSIONS.final),
+      getAssetsFromImageKit(IK_FOLDERS.subtitles, ASSET_EXTENSIONS.subtitles),
+      getAssetsFromImageKit(IK_FOLDERS.thumbnails, ASSET_EXTENSIONS.thumbnails),
     ])
 
     const assets = { audio, videos, final, subtitles, thumbnails }
@@ -179,7 +176,7 @@ export const getAllAssets = async () => {
       0
     )
     assets.totalSizeFormatted = formatSize(assets.totalSize)
-    assets.storage = "r2"
+    assets.storage = "imagekit"
 
     return assets
   }
@@ -218,35 +215,35 @@ export const getAssetsByType = async (type) => {
     throw new Error(`Invalid asset type: ${type}. Valid types: ${Object.keys(LOCAL_ASSET_DIRS).join(", ")}`)
   }
 
-  if (isR2Configured()) {
-    return getAssetsFromR2(R2_PREFIXES[type], ASSET_EXTENSIONS[type])
+  if (isImageKitConfigured()) {
+    return getAssetsFromImageKit(IK_FOLDERS[type], ASSET_EXTENSIONS[type])
   }
 
   return getFilesFromLocal(LOCAL_ASSET_DIRS[type], ASSET_EXTENSIONS[type])
 }
 
 /**
- * Delete a single asset by its path/key.
- * Accepts either a filesystem path (local) or an R2 key (e.g. "audio/file.mp3").
+ * Delete a single asset by its path.
+ * Accepts either a filesystem path (local) or an ImageKit file path.
  */
 export const deleteAsset = async (filePath) => {
-  if (isR2Configured()) {
-    // If it's an R2 key (starts with a known prefix), delete from R2
-    if (Object.values(R2_PREFIXES).some((p) => filePath.startsWith(p))) {
-      return deleteAssetFromR2(filePath)
+  if (isImageKitConfigured()) {
+    // If it's an ImageKit path (starts with autotube/), delete from ImageKit
+    if (filePath.startsWith("autotube/")) {
+      return deleteAssetFromImageKit(filePath)
     }
 
-    // If it looks like a local path, check if it's an R2 key by basename
-    // Try to find it in R2 by constructing the key from type + basename
+    // If it looks like a local path, check if it matches an ImageKit file
     const basename = path.basename(filePath)
-    for (const [type, prefix] of Object.entries(R2_PREFIXES)) {
-      const key = `${prefix}/${basename}`
-      const exists = await r2Service.fileExists(key)
-      if (exists) {
-        return deleteAssetFromR2(key)
+    for (const [type, folder] of Object.entries(IK_FOLDERS)) {
+      const files = await imagekitService.listFiles(folder)
+      const found = files.find((f) => f.name === basename)
+      if (found) {
+        await imagekitService.deleteFile(found.fileId)
+        return { success: true, path: found.filePath }
       }
     }
-    throw new Error("File not found in R2")
+    throw new Error("File not found in ImageKit")
   }
 
   // Local filesystem fallback
@@ -275,20 +272,20 @@ const ALLOWED_DELETE_EXTENSIONS = new Set([
  * Delete all assets of a given type (or "all").
  */
 export const deleteAllAssets = async (type) => {
-  if (isR2Configured()) {
+  if (isImageKitConfigured()) {
     if (type === "all") {
       let totalDeleted = 0
-      for (const prefix of Object.values(R2_PREFIXES)) {
-        const count = await r2Service.deleteFilesByPrefix(prefix)
+      for (const folder of Object.values(IK_FOLDERS)) {
+        const count = await imagekitService.deleteFilesByFolder(folder)
         totalDeleted += count
       }
       return { deleted: "all", count: totalDeleted }
     }
 
-    const prefix = R2_PREFIXES[type]
-    if (!prefix) throw new Error(`Invalid asset type: ${type}`)
+    const folder = IK_FOLDERS[type]
+    if (!folder) throw new Error(`Invalid asset type: ${type}`)
 
-    const count = await r2Service.deleteFilesByPrefix(prefix)
+    const count = await imagekitService.deleteFilesByFolder(folder)
     return { deleted: type, count }
   }
 

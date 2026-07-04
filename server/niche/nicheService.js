@@ -22,6 +22,9 @@ const ensureCacheLoaded = async () => {
       nicheCache.set(doc.niche, {
         videos: doc.videos || [],
         totalViralScore: doc.totalViralScore || 0,
+        totalViews: doc.totalViews || 0,
+        totalLikes: doc.totalLikes || 0,
+        totalComments: doc.totalComments || 0,
         count: doc.videoCount || 0,
         lastUpdated: doc.updatedAt?.getTime() || Date.now()
       })
@@ -51,6 +54,9 @@ const syncNicheToDb = async (niche) => {
         videoCount: data.count,
         totalViralScore: data.totalViralScore,
         averageViralScore: data.count > 0 ? Math.round(data.totalViralScore / data.count) : 0,
+        totalViews: data.totalViews || 0,
+        totalLikes: data.totalLikes || 0,
+        totalComments: data.totalComments || 0,
         videos: recentVideos
       }
     },
@@ -71,6 +77,9 @@ export const registerVideoPerformance = async (niche, videoId) => {
     nicheCache.set(niche, {
       videos: [],
       totalViralScore: 0,
+      totalViews: 0,
+      totalLikes: 0,
+      totalComments: 0,
       count: 0,
       lastUpdated: Date.now()
     })
@@ -112,6 +121,9 @@ export const updateNichePerformance = async (niche, videoId) => {
     const earnings = getEstimatedEarnings(analytics.views, niche)
 
     data.totalViralScore += viralScore
+    data.totalViews += analytics.views || 0
+    data.totalLikes += analytics.likes || 0
+    data.totalComments += analytics.comments || 0
     data.lastUpdated = Date.now()
 
     // Sync to MongoDB

@@ -61,7 +61,7 @@ Thumbs.db
 
 # =========================
 # Generated assets (videos, audio) - local dev only
-# In production, files are stored in Cloudflare R2
+# In production, files are managed via ImageKit
 # =========================
 assets/generated/videos/
 assets/generated/audio/

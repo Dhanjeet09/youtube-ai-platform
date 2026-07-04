@@ -1,5 +1,6 @@
 import express from "express"
 import { asyncHandler } from "../../middleware/asyncHandler.js"
+import { youtubeLimiter, youtubeReadLimiter } from "../../middleware/rateLimiter.js"
 import {
   youtubeAuth,
   youtubeCallback,
@@ -10,10 +11,15 @@ import {
 
 const router = express.Router()
 
-router.get("/auth-url", asyncHandler(getAuthUrl))
-router.get("/status", asyncHandler(getAuthStatus))
-router.get("/auth", asyncHandler(youtubeAuth))
+// Read-only endpoints — generous limit
+router.get("/auth-url", youtubeReadLimiter, asyncHandler(getAuthUrl))
+router.get("/status", youtubeReadLimiter, asyncHandler(getAuthStatus))
+router.get("/auth", youtubeReadLimiter, asyncHandler(youtubeAuth))
+
+// Callback — auth-specific limit
 router.get("/callback", asyncHandler(youtubeCallback))
-router.post("/upload", asyncHandler(uploadVideo))
+
+// Upload — strict limit
+router.post("/upload", youtubeLimiter, asyncHandler(uploadVideo))
 
 export default router
